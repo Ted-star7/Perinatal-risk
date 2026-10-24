@@ -1,0 +1,92 @@
+# The single source of truth for model inputs.
+# Both ml/train.py and backend build features from this + features.py.
+# Outcome-time items (place of delivery, birth weight, sex) are NOT here —
+# the primary model uses pregnancy-time information only.
+
+version: 0.1.0
+
+features:
+  mother_age:
+    label: Mother's age at pregnancy (years)
+    type: int
+    min: 12
+    max: 55
+    dhs_var: v012
+    missing_codes: [98, 99]
+
+  parity:
+    label: Number of previous births
+    type: int
+    min: 0
+    max: 20
+    dhs_var: v201
+    missing_codes: [98, 99]
+
+  prev_stillbirth:
+    label: Previous stillbirth or pregnancy loss
+    type: bool
+    dhs_var: v228
+
+  birth_interval_months:
+    label: Preceding birth interval (months)
+    type: int
+    min: 0
+    max: 300
+    nullable: true           # null for first pregnancy
+    dhs_var: b11
+
+  multiple_pregnancy:
+    label: Multiple pregnancy (twins or more)
+    type: bool
+    dhs_var: b0
+
+  education:
+    label: Highest education level
+    type: category
+    choices: [none, primary, secondary, higher]
+    dhs_var: v106
+
+  wealth_quintile:
+    label: Wealth quintile
+    type: category
+    choices: [lowest, second, middle, fourth, highest]
+    dhs_var: v190
+    note: survey-built index, not a clinic record — review before clinical use
+
+  residence:
+    label: Residence
+    type: category
+    choices: [urban, rural]
+    dhs_var: v025
+
+  region:
+    label: Region
+    type: category
+    dhs_var: v024
+
+# ANC sub-cohort only (the smaller, richer cohort)
+anc_features:
+  anc_visits:
+    label: Number of ANC visits
+    type: int
+    min: 0
+    max: 30
+    dhs_var: m14
+    missing_codes: [98, 99]
+
+  anc_timing_months:
+    label: Months pregnant at first ANC visit
+    type: int
+    min: 0
+    max: 10
+    dhs_var: m13
+
+  bp_checked:
+    label: Blood pressure checked at ANC
+    type: bool
+    dhs_var: m42c
+
+  hypertension_selfreport:
+    label: Ever told has high blood pressure (exploratory)
+    type: bool
+    note: proxy only; misses undiagnosed cases. Measured BP is a TZ subsample.

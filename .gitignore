@@ -1,0 +1,53 @@
+# ---- DHS DATA: NEVER COMMIT (licensed, non-redistributable) ----
+data/*
+!data/.gitkeep
+*.DTA
+*.dta
+*.SAV
+*.sav
+*.csv
+*.CSV
+*.zip
+*.ZIP
+*.dat
+*.DAT
+
+# ---- model artifacts (ship via release / git-lfs, not raw) ----
+ml/models/*
+!ml/models/.gitkeep
+
+# ---- secrets ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---- python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- node / angular ----
+node_modules/
+frontend/dist/
+frontend/.angular/
+
+# ---- os / editor ----
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# ---- AI assistant / local tooling (never commit) ----
+.claude/
+.claude*
+CLAUDE.md
+.cursor/
+.aider*

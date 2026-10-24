@@ -1,0 +1,13 @@
+# Every PR auto-requests the integrator. Replace handles with real GitHub users.
+# The integrator (scrum master) owns the repo and merges everything.
+
+*                 @Ted-star7
+
+# Folder owners (added as reviewers alongside the integrator).
+/ml/              @Ted-star7
+/backend/         @Ted-star7
+/frontend/        @Ted-star7
+/db/              @Ted-star7
+
+# The shared truth — changes here need the integrator's explicit review.
+/contracts/       @Ted-star7
