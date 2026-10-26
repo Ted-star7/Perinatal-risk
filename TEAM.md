@@ -1,6 +1,6 @@
 # Team & how we work
 
-Group 13, six of us. Tedd runs the board and is the only one who merges into
+Group 13, six of us. Teddy runs the board and is the only one who merges into
 `main`; everyone else branches and opens a pull request.
 
 We split into two squads for the data stage: one cleans and explores the Kenya
@@ -9,12 +9,12 @@ the build (ml, backend, frontend).
 
 | Person | Squad | GitHub |
 |--------|-------|--------|
-| Tedd (Bigted) | Tanzania · scrum master / integrator | `Ted-star7` |
+| Teddy | Tanzania · scrum master / integrator | `Ted-star7` |
 | Jeremy | Kenya EDA | `mwangi54` |
 | Dennis | Kenya EDA | `des-data` |
 | Eglen | Kenya EDA | `eglen-nyangasi` |
 | Caroline | Tanzania | `carolnerotich` |
-| Jess | Tanzania | `Kirukuu` |
+| Jeff | Tanzania . Team Lead | `Kirukuu` | 
 
 ## The "shared truth" — `contracts/`
 
