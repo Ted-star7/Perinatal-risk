@@ -13,6 +13,4 @@ lives in `ml/src/`.
 - `06_validation_shap.ipynb` — Kenya metrics, transport to Tanzania, SHAP,
   calibration
 
-Create them as you reach each stage. Add this to `.gitignore` locally if you
-prefer to keep heavy notebooks out until they're clean:
-`git add --renormalize` and clear outputs first.
+
