@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS recommendations (
     llm_model       VARCHAR(64)
 );
 
--- The gold dataset: clinician verdict on each recommendation.
+-- : clinician verdict on each recommendation.
 CREATE TABLE IF NOT EXISTS feedback (
     id              VARCHAR(36) PRIMARY KEY,
     prediction_id   VARCHAR(36) REFERENCES predictions(id),
