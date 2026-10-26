@@ -1,50 +1,42 @@
 # The single definition of each cohort. Change here = review by integrator.
+# The cohorts are already built as processed CSVs (row counts confirmed below);
+# these are the files the notebooks load from data/processed/ (git-ignored).
 
-version: 0.1.0
+version: 0.2.0
 
 cohorts:
-  perinatal_full:
+  perinatal:
     description: All pregnancies of 7+ months in the last 5 years (headline cohort)
-    recode_files: [GR, BR]
-    inclusion:
-      gestation_months_min: 7
-      years_before_survey: 5
+    files: {kenya: data/processed/ke_perinatal.csv, tanzania: data/processed/tz_perinatal.csv}
     outcome: perinatal_death        # stillbirth OR death in first 7 days
-    expected_n: {kenya: 19822, tanzania: 10980}
+    n: {kenya: 19822, tanzania: 10980}
     expected_events: {kenya: 677, tanzania: 412}
 
   perinatal_anc:
     description: Most recent birth/stillbirth in last 3 years, with ANC detail
-    recode_files: [NR, BR, KR]
-    inclusion:
-      most_recent: true
-      years_before_survey: 3
-      has_anc_detail: true
+    files: {kenya: data/processed/ke_perinatal_anc.csv, tanzania: data/processed/tz_perinatal_anc.csv}
     outcome: perinatal_death
-    expected_n: {kenya: 10590, tanzania: 5952}
+    n: {kenya: 10590, tanzania: 5952}
     expected_events: {kenya: 315, tanzania: 205}
 
-  low_birth_weight:
+  lbw:
     description: Most recent live births that were weighed
-    recode_files: [KR, BR]
-    inclusion:
-      weighed: true
-      live_birth: true
-    outcome: low_birth_weight        # < 2500 g
-    expected_n: {kenya: 4299, tanzania: 4626}
+    files: {kenya: data/processed/ke_lbw.csv, tanzania: data/processed/tz_lbw.csv}
+    outcome: low_birth_weight        # birth_weight_g < 2500
+    n: {kenya: 4299, tanzania: 4626}
     expected_events: {kenya: 356, tanzania: 355}
 
-sample_weight: v005      # divide by 1,000,000 before use
+sample_weight: v005      # divide by 1,000,000 before use (or use the 'weight' column)
 cluster_id: v001         # grouped cross-validation keeps whole clusters together
 
 # Build gate: reproduce the published weighted KE stillbirth rate.
 validation_checks:
   kenya_weighted_stillbirth_per_1000: 15.1
 
-# Baseline to beat: the high-risk checklist.
+# Baseline to beat: the high-risk checklist (column names match the CSVs).
 checklist_flags:
-  - mother_age < 18 or mother_age >= 35
-  - parity >= 5
-  - birth_interval_months < 24
-  - multiple_pregnancy == true
-  - prev_stillbirth == true
+  - maternal_age < 18 or maternal_age >= 35
+  - prior_live_births >= 5
+  - preceding_interval_m < 24
+  - multiple == 1
+  - prior_stillbirth == 1

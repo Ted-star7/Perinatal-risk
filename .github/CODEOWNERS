@@ -1,13 +1,18 @@
-# Every PR auto-requests the integrator. Replace handles with real GitHub users.
-# The integrator (scrum master) owns the repo and merges everything.
+# Every PR auto-requests the integrator (Tedd), who is the only one who merges.
+# Folder owners are added as reviewers alongside him.
 
 *                 @Ted-star7
 
-# Folder owners (added as reviewers alongside the integrator).
-/ml/              @Ted-star7
+# Kenya EDA squad
+/ml/notebooks/    @Ted-star7 @mwangi54 @des-data @eglen-nyangasi
+
+# Tanzania squad + shared ml code
+/ml/              @Ted-star7 @carolnerotich @Kirukuu
+
+# Component leads (assign as the build stage starts)
 /backend/         @Ted-star7
 /frontend/        @Ted-star7
 /db/              @Ted-star7
 
-# The shared truth — changes here need the integrator's explicit review.
+# The shared truth — the integrator reviews every change here.
 /contracts/       @Ted-star7

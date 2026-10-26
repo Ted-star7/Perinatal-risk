@@ -1,6 +1,7 @@
 # ---- DHS DATA: NEVER COMMIT (licensed, non-redistributable) ----
 data/*
 !data/.gitkeep
+!data/README.md
 *.DTA
 *.dta
 *.SAV

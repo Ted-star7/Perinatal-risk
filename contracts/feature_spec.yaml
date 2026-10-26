@@ -1,92 +1,112 @@
 # The single source of truth for model inputs.
-# Both ml/train.py and backend build features from this + features.py.
-# Outcome-time items (place of delivery, birth weight, sex) are NOT here —
-# the primary model uses pregnancy-time information only.
+# Column names match the processed cohort CSVs the team built
+# (data/processed/{ke,tz}_{perinatal,perinatal_anc,lbw}.csv).
+# Both ml/train.py and the backend build features from this + features.py.
+#
+# Outcome-time items (delivery_place, birth_weight_g, baby_sex) are present in
+# the CSVs but are NOT predictors — they are only known at or after birth.
 
-version: 0.1.0
+version: 0.2.0
 
+# Survey design columns (not predictors; needed for weighting and CV).
+design:
+  caseid: respondent id
+  v001: survey cluster (grouped cross-validation keeps a cluster in one fold)
+  v005: sample weight (divide by 1,000,000); 'weight' column is the scaled form
+
+# Available in all three cohorts.
 features:
-  mother_age:
-    label: Mother's age at pregnancy (years)
+  maternal_age:
+    label: Mother's age at the pregnancy (years)
     type: int
-    min: 12
-    max: 55
-    dhs_var: v012
-    missing_codes: [98, 99]
 
-  parity:
-    label: Number of previous births
+  prior_pregnancies:
+    label: Number of previous pregnancies
     type: int
-    min: 0
-    max: 20
-    dhs_var: v201
-    missing_codes: [98, 99]
 
-  prev_stillbirth:
-    label: Previous stillbirth or pregnancy loss
-    type: bool
-    dhs_var: v228
+  prior_live_births:
+    label: Number of previous live births (parity)
+    type: int
 
-  birth_interval_months:
+  prior_stillbirth:
+    label: Previous stillbirth
+    type: bool          # 0 / 1
+
+  prior_loss:
+    label: Previous pregnancy loss
+    type: bool          # 0 / 1
+
+  preceding_interval_m:
     label: Preceding birth interval (months)
-    type: int
-    min: 0
-    max: 300
-    nullable: true           # null for first pregnancy
-    dhs_var: b11
+    type: float
+    nullable: true      # blank for a first pregnancy
 
-  multiple_pregnancy:
+  multiple:
     label: Multiple pregnancy (twins or more)
-    type: bool
-    dhs_var: b0
+    type: bool          # 0 / 1
 
   education:
     label: Highest education level
     type: category
-    choices: [none, primary, secondary, higher]
-    dhs_var: v106
+    choices: [No education, Primary, Secondary, Higher]
 
   wealth_quintile:
     label: Wealth quintile
     type: category
-    choices: [lowest, second, middle, fourth, highest]
-    dhs_var: v190
+    choices: [Poorest, Poorer, Middle, Richer, Richest]
     note: survey-built index, not a clinic record — review before clinical use
 
   residence:
     label: Residence
     type: category
-    choices: [urban, rural]
-    dhs_var: v025
+    choices: [Urban, Rural]
 
   region:
     label: Region
     type: category
-    dhs_var: v024
 
-# ANC sub-cohort only (the smaller, richer cohort)
+  told_high_bp:
+    label: Ever told has high blood pressure (self-report, exploratory)
+    type: bool          # 0.0 / 1.0, may be blank
+    nullable: true
+    note: proxy only; misses undiagnosed cases. Measured BP is a TZ subsample.
+
+# Extra predictors available only in the *_anc cohorts.
 anc_features:
   anc_visits:
     label: Number of ANC visits
-    type: int
-    min: 0
-    max: 30
-    dhs_var: m14
-    missing_codes: [98, 99]
-
-  anc_timing_months:
+    type: float
+    nullable: true
+  first_anc_month:
     label: Months pregnant at first ANC visit
-    type: int
-    min: 0
-    max: 10
-    dhs_var: m13
-
-  bp_checked:
-    label: Blood pressure checked at ANC
+    type: float
+    nullable: true
+  bp_measured:
+    label: Blood pressure measured at ANC
     type: bool
-    dhs_var: m42c
-
-  hypertension_selfreport:
-    label: Ever told has high blood pressure (exploratory)
+    nullable: true
+  urine_tested:
+    label: Urine tested at ANC
     type: bool
-    note: proxy only; misses undiagnosed cases. Measured BP is a TZ subsample.
+    nullable: true
+  blood_tested:
+    label: Blood tested at ANC
+    type: bool
+    nullable: true
+  iron_tablets:
+    label: Given iron tablets at ANC
+    type: bool
+    nullable: true
+
+# Outcomes (targets, not inputs).
+outcomes:
+  perinatal_death:
+    label: Stillbirth or death in the first 7 days
+    type: bool
+    cohorts: [perinatal, perinatal_anc]
+    components: [stillbirth, early_neonatal_death]
+  low_birth_weight:
+    label: Birth weight under 2500 g
+    type: bool
+    cohorts: [lbw]
+    derived_from: birth_weight_g

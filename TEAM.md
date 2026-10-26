@@ -11,14 +11,10 @@ the build (ml, backend, frontend).
 |--------|-------|--------|
 | Tedd (Bigted) | Tanzania · scrum master / integrator | `Ted-star7` |
 | Jeremy | Kenya EDA | `mwangi54` |
+| Dennis | Kenya EDA | `des-data` |
 | Eglen | Kenya EDA | `eglen-nyangasi` |
-| dmwikya | Kenya EDA | `des-data` *(confirm)* |
-| Caroline | Tanzania | _to add_ |
-| (sixth) | Tanzania | `Kirukuu` *(confirm name)* |
-
-Two usernames from the Ecosort repo still need a name against them: `des-data`
-and `Kirukuu`. Once Tedd confirms who they are and Caroline sends her handle,
-the table is final and the names go into `.github/CODEOWNERS`.
+| Caroline | Tanzania | `carolnerotich` |
+| Jess | Tanzania | `Kirukuu` |
 
 ## The "shared truth" — `contracts/`
 
