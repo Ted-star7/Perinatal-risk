@@ -57,7 +57,10 @@ Each step has to pass before the next builds on it.
 ## Working together
 
 `main` stays clean and demo-able. No one pushes to it directly — you branch,
-open a pull request, and Tedd merges. The rules are in
+open a pull request, and Teddy merges.
+
+**New here? Start with [GETTING_STARTED.md](GETTING_STARTED.md)** — clone, where
+to put the data, and the git steps you repeat each day. The rules are in
 [CONTRIBUTING.md](CONTRIBUTING.md); who owns what is in [TEAM.md](TEAM.md).
 
 ## A note on what this is
