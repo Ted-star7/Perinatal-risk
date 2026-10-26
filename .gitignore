@@ -15,7 +15,6 @@ data/*
 
 # ---- model artifacts (ship via release / git-lfs, not raw) ----
 ml/models/*
-!ml/models/.gitkeep
 
 # ---- secrets ----
 .env
