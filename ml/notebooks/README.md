@@ -12,7 +12,7 @@ kenya/      (Kenya EDA squad — Jeremy, Dennis, Eglen)
   eda_perinatal_anc.ipynb    + ANC predictors
   eda_lbw.ipynb              low birth weight (weighed births)
 
-tanzania/   (Tanzania squad — Caroline, Jeff, Tedd)
+tanzania/   (Tanzania squad — Caroline, Jeff, Teddy)
   eda_perinatal.ipynb
   eda_perinatal_anc.ipynb
   eda_lbw.ipynb
@@ -20,7 +20,7 @@ tanzania/   (Tanzania squad — Caroline, Jeff, Tedd)
 
 Pick one cohort in your squad and work only in that file. Each notebook loads
 its own dataset from `data/processed/` and has a short overview of what to
-explore — you write and run your own code.
+explore.
 
 ## Modeling — later, shared
 
