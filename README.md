@@ -42,7 +42,7 @@ training data was, and the score a clinician sees matches what we trained.
 
 Each step has to pass before the next builds on it.
 
-1. Scaffold — repo clones, layout agreed. *(this commit)*
+1. Scaffold — repo clones, layout agreed. 
 2. EDA and cleaning, per squad → cleaned cohorts land in the clean DB.
    Check: the weighted Kenya stillbirth rate comes out at 15.1 per 1,000,
    matching the published KDHS figure.
