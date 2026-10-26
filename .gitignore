@@ -46,9 +46,10 @@ frontend/.angular/
 .vscode/
 *.log
 
-# ---- AI assistant / local tooling (never commit) ----
+# ---- AI assistant / local tooling (never commit) or add you tools here ----
 .claude/
 .claude*
 CLAUDE.md
 .cursor/
 .aider*
+.openai*
