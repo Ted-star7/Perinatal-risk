@@ -42,14 +42,22 @@ def load_cohort(name: str) -> pd.DataFrame:
     return combined
 
 
-# -------------------------------------------------------------------------
-# TODO (team): the final columns to keep for each cohort, from the EDA.
-# Leave as None to keep all columns for now.
-# -------------------------------------------------------------------------
+# Columns to keep per cohort = predictors + the target.
+# These are the EDA-agreed defaults; add more later if the team decides.
+_BASE = [
+    "maternal_age", "prior_pregnancies", "prior_live_births", "prior_stillbirth",
+    "prior_loss", "preceding_interval_m", "multiple", "education",
+    "wealth_quintile", "residence", "region", "told_high_bp",
+]
+_ANC = [
+    "anc_visits", "first_anc_month", "bp_measured",
+    "urine_tested", "blood_tested", "iron_tablets",
+]
+
 SELECTED: dict[str, list[str] | None] = {
-    "perinatal": None,
-    "perinatal_anc": None,
-    "lbw": None,
+    "perinatal":     _BASE + ["perinatal_death"],
+    "perinatal_anc": _BASE + _ANC + ["perinatal_death"],
+    "lbw":           _BASE + ["low_birth_weight"],
 }
 
 
