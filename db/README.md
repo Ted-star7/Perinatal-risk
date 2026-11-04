@@ -38,6 +38,20 @@ loaded tz_lbw: 4,626 rows ...
 tables in clean DB: ['ke_lbw', 'ke_perinatal', 'ke_perinatal_anc', 'tz_lbw', 'tz_perinatal', 'tz_perinatal_anc']
 ```
 
+### Optional: load the combined, cleaned, model-ready data
+
+`seed.py` loads the six raw cohort CSVs. To also load the **combined** data
+(KE+TZ concatenated, cleaned, with the 80/20 split column) — the modeling-ready
+version the backoffice reads — run:
+
+```bash
+python db/seed_combined.py
+```
+
+This creates three tables: `combined_perinatal`, `combined_perinatal_anc`,
+`combined_lbw`. It calls `ml/src/dataset.build_cohort()`, so it reflects the
+latest cleaning automatically.
+
 Re-running `seed.py` is safe — it replaces the tables.
 
 ## 3. View it in TablePlus
