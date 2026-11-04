@@ -1,0 +1,31 @@
+// Design tokens — the soft, warm clinical palette.
+// Import once in styles.scss:  @use 'styles/tokens' as *;
+
+:root {
+  // surfaces
+  --page-bg: #efe4d6;
+  --surface-1: #f6ede1;
+  --surface-2: #ffffff;
+  --border: #e4d7c6;
+  --border-strong: #d8c7b2;
+
+  // text
+  --text-primary: #2b2621;
+  --text-secondary: #6f655a;
+  --text-muted: #a2968754;
+
+  // accent (clay)
+  --accent: #d87a53;
+  --accent-soft: #f4e3d8;
+  --on-accent: #ffffff;
+
+  // risk roles
+  --success: #3b7d4f;      --bg-success: #e7f1e6;   --border-success: #cfe3cd;
+  --warning: #b9771a;      --bg-warning: #f8ecd6;   --border-warning: #ecd9b8;
+  --danger:  #b5452f;      --bg-danger:  #f6e2db;   --border-danger:  #ecccc0;
+
+  // shape
+  --radius: 10px;
+  --radius-card: 14px;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
