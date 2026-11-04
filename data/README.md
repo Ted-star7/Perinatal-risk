@@ -1,7 +1,7 @@
 # data/
 
 DHS files and the cohorts built from them are **licensed** — they are never
-committed. Tedd shares them separately; drop them here locally.
+committed. Teddy shares them separately; drop them here locally.
 
 Expected layout:
 

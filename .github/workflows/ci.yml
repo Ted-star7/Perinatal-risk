@@ -6,58 +6,15 @@ on:
   push:
     branches: [main]
 
+# Lint the Python we actually have. Backend/frontend checks come back when
+# those stages are built out.
 jobs:
-  changes:
+  lint:
     runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      ml: ${{ steps.filter.outputs.ml }}
-      frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
+      - uses: actions/setup-python@v5
         with:
-          filters: |
-            backend:
-              - 'backend/**'
-              - 'contracts/**'
-            ml:
-              - 'ml/**'
-              - 'contracts/**'
-            frontend:
-              - 'frontend/**'
-              - 'contracts/**'
-
-  backend:
-    needs: changes
-    if: ${{ needs.changes.outputs.backend == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - run: pip install -r backend/requirements.txt ruff pytest
-      - run: ruff check backend contracts
-      - run: pytest backend/tests -q
-
-  ml:
-    needs: changes
-    if: ${{ needs.changes.outputs.ml == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - run: pip install -r ml/requirements.txt ruff
-      - run: ruff check ml contracts
-
-  frontend:
-    needs: changes
-    if: ${{ needs.changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: "20" }
-      - run: cd frontend && npm ci && npm run lint --if-present && npm run build --if-present
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check .
