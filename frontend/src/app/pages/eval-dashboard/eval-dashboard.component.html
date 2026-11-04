@@ -1,0 +1,26 @@
+<section class="eval">
+  <header class="eval__head">
+    <h2 class="eval__title">Model performance</h2>
+    <p class="eval__hint">Accuracy on the held-out test split, per cohort.</p>
+  </header>
+
+  <div class="cards">
+    @for (m of metrics(); track m.cohort) {
+      <article class="metric">
+        <div class="metric__cohort">{{ m.cohort }}</div>
+        <div class="metric__value">{{ m.prAuc | number:'1.2-2' }}</div>
+        <div class="metric__label">PR-AUC</div>
+        <div class="metric__row">
+          <span>ROC-AUC {{ m.rocAuc | number:'1.2-2' }}</span>
+          <span class="metric__flag" [class.metric__flag--yes]="m.beatsChecklist">
+            {{ m.beatsChecklist ? 'beats checklist' : 'vs checklist' }}
+          </span>
+        </div>
+        <div class="metric__foot">{{ m.testEvents | number }} test events</div>
+      </article>
+    }
+  </div>
+
+  <p class="eval__todo">Charts (calibration, SHAP, confusion) render here once the
+    modeling stage publishes metrics.json.</p>
+</section>

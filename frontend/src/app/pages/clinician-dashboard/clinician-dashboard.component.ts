@@ -32,13 +32,13 @@ interface Result {
 }
 
 @Component({
-  selector: 'app-risk-assessment',
+  selector: 'app-clinician-dashboard',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './risk-assessment.component.html',
-  styleUrl: './risk-assessment.component.scss',
+  templateUrl: './clinician-dashboard.component.html',
+  styleUrl: './clinician-dashboard.component.scss',
 })
-export class RiskAssessmentComponent {
+export class ClinicianDashboardComponent {
   /** The form state. A signal so the result recomputes whenever it changes. */
   readonly form = signal<Assessment>({
     age: 29,

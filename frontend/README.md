@@ -1,63 +1,55 @@
 # Frontend (Angular)
 
-Not scaffolded here — generate it with the Angular CLI so you get the exact
-version you want, then commit. The folder is reserved so the mono-repo layout
-and CODEOWNERS are already in place.
+Two dashboards, one app:
 
-## One-time scaffold
+- **clinician-dashboard** — the doctor enters pregnancy-time details and sees the
+  risk ring, the drivers, and a follow-up note. (Warm, card-based UI.)
+- **eval-dashboard** — the backoffice: model accuracy, calibration and SHAP per
+  cohort, for the team and the presentation.
+
+## Layout
+
+```
+src/
+├── styles/
+│   └── _tokens.scss                       # the warm palette (one source of colour)
+└── app/
+    ├── pages/
+    │   ├── clinician-dashboard/           # dashboard 1 — standalone component
+    │   │   └── clinician-dashboard.component.{ts,html,scss,spec.ts}
+    │   └── eval-dashboard/                # dashboard 2 — standalone component
+    │       └── eval-dashboard.component.{ts,html,scss,spec.ts}
+    └── app.routes.ts                      # /assess and /performance
+```
+
+Each page is a **standalone component** with the four files (`ts`, `html`,
+`scss`, `spec.ts`). Shared pieces (nav bar, card, risk ring) become components
+under `app/shared/` as we grow.
+
+## Scaffold the app (once)
 
 ```bash
-npm install -g @angular/cli
 cd frontend
-ng new perinatal --directory . --routing --style scss --skip-git
-npm install
+ng new perinatal-ui --directory . --routing --style scss --standalone --skip-git
 ```
+Then drop these `pages/` and `styles/` folders in, and:
 
-## Folder layout to create under src/app/
-
-```
-core/api/        # client generated from ../../contracts/openapi.yaml
-                 #   npx @openapitools/openapi-generator-cli generate \
-                 #     -i ../contracts/openapi.yaml -g typescript-angular \
-                 #     -o src/app/core/api
-clinical/        # input form -> result (risk band + drivers) -> recommendation
-                 #   -> feedback buttons (good / viable / unusable)
-eval/            # dashboards: accuracy, calibration, SHAP, usage from /eval/metrics
-```
-
-## Why generate the client from the contract
-
-`core/api` is generated from `contracts/openapi.yaml`, the same schema the
-backend implements. Regenerate whenever the contract changes and the frontend
-and backend can never drift. Do not hand-write API calls.
-
-## Dev
-
-```bash
-ng serve           # http://localhost:4200  (API CORS already allows this)
-```
-
-The backend's stub model is live from day one, so you can build and test the
-full input -> result -> feedback flow before the real model exists.
-
-## Risk-assessment page (prototype on `teddy-frontend`)
-
-`src/app/pages/risk-assessment/` holds the clinician console as a standalone
-component (the four files: `.ts`, `.html`, `.scss`, `.spec.ts`), plus the warm
-palette in `src/styles/_tokens.scss`.
-
-To see it after `ng new` scaffolds the app:
-
-1. `@use 'styles/tokens' as *;` at the top of `src/styles.scss`, and set
-   `body { background: var(--page-bg); }`.
-2. Add a route in `src/app/app.routes.ts`:
+1. `src/styles.scss`: `@use 'styles/tokens' as *;` and `body { background: var(--page-bg); }`
+2. `src/app/app.routes.ts`:
    ```ts
-   { path: '', loadComponent: () =>
-       import('./pages/risk-assessment/risk-assessment.component')
-         .then(m => m.RiskAssessmentComponent) }
+   export const routes = [
+     { path: 'assess', loadComponent: () =>
+         import('./pages/clinician-dashboard/clinician-dashboard.component')
+           .then(m => m.ClinicianDashboardComponent) },
+     { path: 'performance', loadComponent: () =>
+         import('./pages/eval-dashboard/eval-dashboard.component')
+           .then(m => m.EvalDashboardComponent) },
+     { path: '', redirectTo: 'assess', pathMatch: 'full' },
+   ];
    ```
-3. Load Tabler icons + Inter in `src/index.html` `<head>` (both on allowed CDNs).
-4. `ng serve` → open http://localhost:4200.
+3. Load Inter + Tabler icons in `src/index.html` `<head>` (both on allowed CDNs).
+4. `ng serve` → http://localhost:4200.
 
-The scoring in the component is a placeholder — once the backend is live it
-returns the real score + SHAP drivers and this page just renders them.
+The clinician scoring is a placeholder mirroring the EDA drivers; once the
+backend serves the real model it returns the score + SHAP and the page just
+renders them.
