@@ -8,11 +8,16 @@ These files are git-ignored (licensed data), so they stay on your machine.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
-from ml.src.dataset import COHORTS, build_cohort
+# Make `ml` importable whether run as a module or by file path.
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
-OUT = Path(__file__).resolve().parents[2] / "data" / "combined"
+from ml.src.dataset import COHORTS, build_cohort  # noqa: E402
+
+OUT = ROOT / "data" / "combined"
 
 
 def main() -> None:

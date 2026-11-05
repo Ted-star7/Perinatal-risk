@@ -20,39 +20,28 @@ Check they're running:
 docker compose ps
 ```
 
-## 2. Load the cohort data into clean_db
+## 2. Load the combined data into clean_db
 
-Make sure the six CSVs are in `data/processed/` first (see `data/README.md`).
-Then install the loader deps once and run the seed:
+Make sure the six source CSVs are in `data/processed/` first (see
+`data/README.md`). Then install the loader deps once and seed the three
+combined, cleaned, model-ready tables:
 
 ```bash
 pip install -r db/requirements.txt      # or: .venv/bin/pip install -r db/requirements.txt
-python db/seed.py
-```
-
-You should see all six cohorts load with their row counts:
-
-```
-loaded ke_perinatal: 19,822 rows ...
-loaded tz_lbw: 4,626 rows ...
-tables in clean DB: ['ke_lbw', 'ke_perinatal', 'ke_perinatal_anc', 'tz_lbw', 'tz_perinatal', 'tz_perinatal_anc']
-```
-
-### Optional: load the combined, cleaned, model-ready data
-
-`seed.py` loads the six raw cohort CSVs. To also load the **combined** data
-(KE+TZ concatenated, cleaned, with the 80/20 split column) — the modeling-ready
-version the backoffice reads — run:
-
-```bash
 python db/seed_combined.py
 ```
 
-This creates three tables: `combined_perinatal`, `combined_perinatal_anc`,
-`combined_lbw`. It calls `ml/src/dataset.build_cohort()`, so it reflects the
-latest cleaning automatically.
+You should see:
 
-Re-running `seed.py` is safe — it replaces the tables.
+```
+loaded combined_perinatal: 30,802 rows ...
+loaded combined_lbw: 8,925 rows ...
+combined tables in clean DB: ['combined_lbw', 'combined_perinatal', 'combined_perinatal_anc']
+```
+
+Re-running is safe — it replaces the tables. We load only the three combined
+cohorts (the raw per-country tables aren't needed; `build_cohort()` reads the
+source CSVs directly).
 
 ## 3. View it in TablePlus
 
