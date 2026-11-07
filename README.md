@@ -3,70 +3,68 @@
 Predicting perinatal death and low birth weight in Kenya and Tanzania from the
 2022 DHS surveys. Moringa DSF-PT15, Group 13.
 
-We train on the Kenya DHS and validate, unchanged, on Tanzania. The trained
-model is served behind a web app where a clinician enters what's known during
-pregnancy and gets back a risk score, the factors driving it, and a short
-guideline-safe follow-up note. Every use is recorded so we can judge the tool
-in practice.
-
-This repo is the scaffold: the folders, the agreed definitions, and a
-placeholder file in each spot saying what goes there and who owns it. We fill
-it in stage by stage (see the build order below).
+We pool the Kenya and Tanzania data, train models to rank which pregnancies are
+high-risk, and serve the result in two dashboards: a **clinician** view (enter
+pregnancy details → risk score, drivers, follow-up) and an **eval** view (model
+accuracy for the team and the presentation).
 
 ## Layout
 
-- `ml/` — the data science work: notebooks for EDA and cleaning, plus the
-  training and evaluation code. Runs offline. Its output is one versioned
-  model file in `ml/models/`.
-- `backend/` — the FastAPI service. Loads the trained model and answers
-  requests (`/predict`, `/recommend`, `/eval`). It never trains.
-- `frontend/` — the Angular app. Two parts: the clinical page (enter details →
-  risk → recommendation → feedback) and the eval page (accuracy, calibration
-  and SHAP charts for the presentation).
-- `contracts/` — the definitions everyone shares, so no two of us drift apart:
-  the feature list, the cohort rules, the one feature function, and the API
-  schema. Changes here are reviewed before anything else.
-- `db/` — Postgres: `clean/` holds the cleaned cohorts (read-only), `app/`
-  holds predictions, recommendations and clinician feedback.
-- `data/` — where the DHS files sit locally. They are licensed and **never**
-  committed; the team shares them separately.
+```
+ml/
+├── notebooks/
+│   ├── kenya/ · tanzania/     EDA, one notebook per cohort per country
+│   └── modeling/              9 model notebooks (3 cohorts x 3 algorithms)
+└── src/
+    ├── dataset.py             concatenate KE+TZ, clean, 80/20 split  (build_cohort)
+    └── export_combined.py     write the 3 combined cohorts to CSV
 
-## How the model reaches the app
+contracts/                     shared definitions: cohort_config, feature_spec
+db/                            Docker Postgres + seed + metrics helper + schemas
+frontend/                      Angular app — clinician + eval dashboards
+docs/                          KE vs TZ comparison
+data/                          CSVs, git-ignored (licensed — never committed)
+```
 
-`ml/` produces `ml/models/vX.Y.Z/model.joblib`. The backend loads that file —
-that's the whole handoff. The only code both sides share is
-`contracts/features.py`, so the form inputs are encoded exactly the way the
-training data was, and the score a clinician sees matches what we trained.
+## The pipeline
 
-## Build order
+```
+KE + TZ cohorts ─► build_cohort() ─► combined + cleaned + 80/20 split
+                                           │
+                     train 3 algorithms ───┤──► best model per cohort
+                                           │
+                     metrics ──────────────┴──► model_metrics table ─► eval dashboard
+```
 
-Each step has to pass before the next builds on it.
+- `build_cohort("perinatal")` returns the combined, cleaned data with a `split`
+  column (`train`/`test`). Modeling reads from this (or from the DB — both shown
+  in each notebook).
+- Each of the 9 modeling notebooks trains one algorithm and saves its metrics
+  with `db.metrics.save_metrics()`.
 
-1. Scaffold — repo clones, layout agreed. 
-2. EDA and cleaning, per squad → cleaned cohorts land in the clean DB.
-   Check: the weighted Kenya stillbirth rate comes out at 15.1 per 1,000,
-   matching the published KDHS figure.
-3. Checklist baseline + models (logistic regression, random forest, gradient
-   boosting, grouped CV on the survey cluster) → one model file. Check: it
-   beats the checklist on PR-AUC and still holds on Tanzania.
-4. Backend wired up → serves the model, logs every call, adds the grounded
-   recommendation and the feedback table.
-5. Eval page → accuracy, calibration and SHAP charts.
-6. Clinical page → the input form, the result, and recording each use.
+## Quick start
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r ml/requirements.txt
+# data: drop the shared CSVs into data/processed/   (see data/README.md)
+
+# optional database (only for the dashboards):
+docker compose up -d app_db clean_db
+.venv/bin/pip install -r db/requirements.txt
+python db/seed_combined.py        # loads the 3 combined cohorts
+
+# frontend:
+cd frontend && npm install && npm start      # http://localhost:4200
+```
 
 ## Working together
 
-`main` stays clean and demo-able. No one pushes to it directly — you branch,
-open a pull request, and Teddy merges.
+`main` stays clean. You branch, open a pull request, and Teddy merges. See
+[GETTING_STARTED.md](GETTING_STARTED.md) to set up, [CONTRIBUTING.md](CONTRIBUTING.md)
+for the rules, and [TEAM.md](TEAM.md) for who owns what.
 
-**New here? Start with [GETTING_STARTED.md](GETTING_STARTED.md)** — clone, where
-to put the data, and the git steps you repeat each day. The rules are in
-[CONTRIBUTING.md](CONTRIBUTING.md); who owns what is in [TEAM.md](TEAM.md).
+## What this is
 
-## A note on what this is
-
-This is a research and coursework project, not a clinical device. The model
-ranks risk across a population so care can be targeted; it does not diagnose
-anyone. The recommendations stay inside standard, non-diagnostic advice
-(keep attending ANC, get BP and urine checked, take iron, seek referral if
-flagged) — nothing that reads as a diagnosis or prescription.
+A coursework and research project, not a clinical device. The model ranks risk
+across a population so care can be targeted; it does not diagnose anyone, and the
+follow-up text stays within standard non-diagnostic advice.
