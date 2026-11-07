@@ -1,153 +1,159 @@
-# Database setup — a walkthrough for the team
+# Database setup — step-by-step for the team
 
-This is a teaching guide. By the end you'll understand **why** we use Docker,
-how to create a table by hand with SQL, and what our seed script does and why.
+A complete walkthrough: install the tools, start the database, create a test
+table by hand to learn SQL, then load our real data with the seed. Follow it
+top to bottom.
 
-> You only need this if you're working on the **dashboards / backend**. If you're
-> doing **modeling**, you can skip it — the notebooks read CSVs directly.
-
----
-
-## 0. The idea in one picture
-
-```
-Docker ──runs──► Postgres (the database server)
-                     ▲
-          TablePlus ─┘  (a window to look inside)
-                     ▲
-          seed script ─┘  (fills it with our data)
-```
-
-- **Postgres** stores the tables. **Docker** runs Postgres in a sealed box so
-  everyone has the exact same setup — no "install Postgres on Windows" pain.
-- **TablePlus** is just a viewer/editor to see and query the tables.
-- **The seed script** loads our cohort data into the tables automatically.
+> Only needed if you're working on the **dashboards**. Modeling people read CSVs
+> and can skip all of this.
 
 ---
 
-## 1. Install Docker
+## About the passwords (read this first)
 
-- **Windows / Mac:** install **Docker Desktop** from docker.com → open it once so
-  it's running (you'll see the whale icon).
-- **Linux:** install **Docker Engine** (`sudo apt install docker.io`), then
-  `sudo systemctl start docker`.
+Every teammate runs **their own** database on **their own computer** (localhost).
+Nothing is shared over the internet, so the passwords are **not secret** — they
+are baked into `docker-compose.yml` and are the same for everyone:
 
-Check it works:
+| Database | Host | Port | User | Password | DB name |
+|----------|------|------|------|----------|---------|
+| app_db | 127.0.0.1 | 5432 | `app` | `app` | `perinatal_app` |
+| clean_db | 127.0.0.1 | 5433 | `readonly` | `readonly` | `perinatal_clean` |
+
+So "what password do I give them?" → just tell them **`app`** and **`readonly`**.
+They're local dev credentials, not a real secret.
+
+---
+
+## Step 1 — install the tools
+
+1. **Docker**
+   - Windows / Mac: download **Docker Desktop** from docker.com, install, and
+     **open it once** (wait for the whale icon to say "running").
+   - Linux: `sudo apt install docker.io` then `sudo systemctl start docker`.
+2. **TablePlus** — download from tableplus.com (free tier is fine).
+
+Check Docker works, in a terminal:
 ```bash
 docker --version
 docker compose version
 ```
 
-Install **TablePlus** too (tableplus.com) — free tier is enough.
-
 ---
 
-## 2. Start the database
+## Step 2 — get the project and start the database
 
-From the project folder:
+In a terminal, go to the project folder (wherever you cloned it):
 ```bash
+cd ~/perinatal-risk          # <-- wherever your clone is
 docker compose up -d app_db clean_db
-docker compose ps        # both should say "Up"
+docker compose ps            # both lines should say "Up"
 ```
 
-What just happened: Docker read `docker-compose.yml`, downloaded Postgres, and
-created two **empty** databases — `perinatal_app` (port 5432) and
-`perinatal_clean` (port 5433). No tables yet.
+What this did: Docker downloaded Postgres and created two **empty** databases —
+`perinatal_app` and `perinatal_clean`. There are no tables yet; we add those next.
 
 ---
 
-## 3. Connect TablePlus
+## Step 3 — create a connection in TablePlus (click by click)
 
-New connection → **PostgreSQL** →
+1. Open **TablePlus**.
+2. Click **Create a new connection…** (or the **+** in the bottom-left).
+3. In the list of database types, choose **PostgreSQL**, then **Create**.
+4. Fill in the fields exactly:
+   - **Name:** `Perinatal clean` (any label you like)
+   - **Host:** `127.0.0.1`
+   - **Port:** `5433`
+   - **User:** `readonly`
+   - **Password:** `readonly`
+   - **Database:** `perinatal_clean`
+   - Leave **SSH** / **SSL** off — it's local.
+5. Click **Test** → it should turn green.
+6. Click **Connect**.
 
-| Field | app_db | clean_db |
-|-------|--------|----------|
-| Host | 127.0.0.1 | 127.0.0.1 |
-| Port | 5432 | 5433 |
-| User | app | readonly |
-| Password | app | readonly |
-| Database | perinatal_app | perinatal_clean |
-
-Connect. Right now it's empty — let's change that.
+You're now looking at an empty database. Make a second connection the same way
+for `perinatal_app` using port **5432**, user **app**, password **app**, database
+**perinatal_app** — that's where predictions and model results live.
 
 ---
 
-## 4. Lesson: create a table BY HAND (so you understand what seeding automates)
+## Step 4 — learn SQL by making a table by hand
 
-In TablePlus, open the **SQL editor** on `perinatal_app` and run this. We'll make
-a tiny `users` table from scratch:
+Before the automated seed, make one table yourself so you see what's happening.
+In TablePlus, open the **SQL editor** (the `>_` icon) on `perinatal_app` and run:
 
 ```sql
--- CREATE TABLE defines the columns and their types
 CREATE TABLE users (
-    id      SERIAL PRIMARY KEY,   -- auto-numbering id
+    id      SERIAL PRIMARY KEY,
     name    TEXT,
     age     INTEGER,
-    height  REAL                  -- a decimal number
+    height  REAL
 );
 
--- INSERT puts rows in
 INSERT INTO users (name, age, height) VALUES
     ('Amina', 29, 1.62),
     ('John', 34, 1.75);
 
--- SELECT reads them back
 SELECT * FROM users;
 ```
 
-You just created a table, added rows, and queried them. That's the whole idea of
-a database: **define columns → insert rows → query**. When you're done playing:
+Put the cursor in a statement and press **Cmd/Ctrl + Enter** to run it. You just:
+- **created** a table (defined its columns),
+- **inserted** two rows,
+- **selected** them back.
 
+That's all a database is: columns + rows. Clean up when done:
 ```sql
-DROP TABLE users;     -- removes it
+DROP TABLE users;
 ```
 
-**The point:** doing this by hand for our real data would mean writing a
-`CREATE TABLE` with **40+ columns** and inserting **30,000 rows** by hand —
-impossible. That's why we use a seed script.
+**The lesson:** doing this by hand for our real data means a `CREATE TABLE` with
+**40+ columns** and inserting **30,000 rows** — nobody types that. So we automate
+it with a seed.
 
 ---
 
-## 5. The seed: let code do it
+## Step 5 — seed the real data
 
-Our combined cohorts have thousands of rows and dozens of columns. The seed
-script creates the tables **and** fills them in one go:
-
+Back in the terminal, in the project folder:
 ```bash
-pip install -r db/requirements.txt      # once (use .venv/bin/pip on Kali)
+pip install -r db/requirements.txt       # once (use .venv/bin/pip on Kali)
 python db/seed_combined.py
 ```
 
-Under the hood it does, for each cohort, the same two steps you did by hand —
-`CREATE TABLE` + `INSERT` — but automatically, reading the data straight from the
-cleaned cohorts (`build_cohort()`). You'll see:
-
+You'll see:
 ```
 loaded combined_perinatal: 30,802 rows ...
 combined tables in clean DB: ['combined_lbw', 'combined_perinatal', 'combined_perinatal_anc']
 ```
 
-Refresh TablePlus (switch the schema dropdown to **public**) and the three
-`combined_*` tables are there. **Why we seed instead of doing it by hand:** it's
-repeatable (anyone runs one command), consistent (same data for everyone), and
-safe to re-run (it replaces the tables).
+The script did the exact `CREATE TABLE` + `INSERT` you did by hand — but for all
+three cohorts, automatically, reading from the cleaned data. **That's why we
+seed:** it's one command, identical for everyone, and safe to re-run (it replaces
+the tables).
 
 ---
 
-## 6. End to end, recap
+## Step 6 — see it
 
-1. **Docker** gives everyone an identical Postgres with zero manual install.
+In TablePlus, click the refresh icon and switch the **schema** dropdown
+(bottom-left) to **public**. The three `combined_*` tables now appear. Click one
+→ **Data** tab to browse rows, **Structure** tab for its columns.
+
+---
+
+## Recap (the end-to-end)
+
+1. **Docker** runs Postgres identically for everyone — no manual DB install.
 2. `docker compose up` creates the empty databases.
-3. **TablePlus** is how you look inside and run SQL.
-4. A table is just **columns + rows** — you can make one by hand with
-   `CREATE TABLE` / `INSERT`.
-5. For real data, the **seed script** automates that at scale.
-6. Later, the **dashboards** read from these tables (combined cohorts for stats,
-   `model_metrics` for accuracy).
+3. **TablePlus** connects to them so you can look inside and run SQL.
+4. A table is **columns + rows**; you can make one with `CREATE TABLE` / `INSERT`.
+5. The **seed** does that at scale from our real data.
+6. The **dashboards** then read these tables.
 
 ## Stop / reset
 
 ```bash
-docker compose stop        # pause (keeps data)
-docker compose down -v     # wipe everything for a fresh start
+docker compose stop        # pause, keeps data
+docker compose down -v     # wipe for a clean start, then re-seed
 ```
