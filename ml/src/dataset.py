@@ -49,13 +49,63 @@ def load_cohort(name: str) -> pd.DataFrame:
 
 
 # -------------------------------------------------------------------------
-# TODO (team): the final columns to keep for each cohort, from the EDA.
-# Leave as None to keep all columns for now.
+# The final columns to keep for each cohort: the outcome and design columns
+# (split, cluster_id, country, weight, interval_imputed), then the features.
+# Lists and reasons: ml/notebooks/pooled/correlation_features.ipynb (section G).
 # -------------------------------------------------------------------------
 SELECTED: dict[str, list[str] | None] = {
-    "perinatal": None,
-    "perinatal_anc": None,
-    "lbw": None,
+    "perinatal": [
+        "perinatal_death",
+        "split",
+        "cluster_id",
+        "country",
+        "weight",
+        "interval_imputed",
+        "maternal_age",
+        "prior_live_births",
+        "first_pregnancy",
+        "prior_stillbirth",
+        "prior_loss",
+        "preceding_interval_m",
+        "multiple",
+    ],
+    "perinatal_anc": [
+        "perinatal_death",
+        "split",
+        "cluster_id",
+        "country",
+        "weight",
+        "interval_imputed",
+        "maternal_age",
+        "prior_live_births",
+        "first_pregnancy",
+        "prior_stillbirth",
+        "prior_loss",
+        "preceding_interval_m",
+        "multiple",
+        "no_anc",
+        "anc4plus",
+        "urine_tested",
+        "iron_tablets",
+    ],
+    "lbw": [
+        "low_birth_weight",
+        "split",
+        "cluster_id",
+        "country",
+        "weight",
+        "interval_imputed",
+        "maternal_age",
+        "prior_live_births",
+        "first_pregnancy",
+        "prior_stillbirth",
+        "prior_loss",
+        "preceding_interval_m",
+        "multiple",
+        "education",
+        "no_anc",
+        "anc4plus",
+    ],
 }
 
 
