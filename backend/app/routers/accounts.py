@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from app.auth import create_token, hash_password, verify_password
 from app.database import get_db
 from app.models import Clinic, Doctor
-from app.schemas import ClinicRegister, Login, Session as SessionOut
+from app.schemas import ClinicRegister, Login
+from app.schemas import Session as SessionOut
 
 router = APIRouter(tags=["accounts"])
 
