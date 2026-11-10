@@ -1,0 +1,33 @@
+<section class="history">
+  <header class="history__head">
+    <div>
+      <h2 class="history__title">{{ clinicName() }} — assessment history</h2>
+      <p class="history__hint">Every assessment made at your clinic.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat__n">{{ total() }}</span><span class="stat__l">assessments</span></div>
+      <div class="stat stat--high"><span class="stat__n">{{ highCount() }}</span><span class="stat__l">high risk</span></div>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="history__empty">Loading…</p>
+  } @else if (rows().length === 0) {
+    <p class="history__empty">No assessments yet. Start one from the assess tab.</p>
+  } @else {
+    <div class="rows">
+      <div class="row row--head">
+        <span>Patient</span><span>Risk</span><span>Band</span><span>Top driver</span><span>When</span>
+      </div>
+      @for (r of rows(); track r.id) {
+        <div class="row">
+          <span class="ref">{{ r.patient_ref || '—' }}</span>
+          <span>{{ r.risk | percent:'1.1-1' }}</span>
+          <span><span class="pill" [class]="'pill--' + r.risk_band">{{ r.risk_band }}</span></span>
+          <span class="driver">{{ r.top_drivers.length ? r.top_drivers[0].label : '—' }}</span>
+          <span class="when">{{ r.created_at | date:'MMM d, HH:mm' }}</span>
+        </div>
+      }
+    </div>
+  }
+</section>

@@ -1,49 +1,32 @@
 <section class="console">
   <header class="topbar">
-    <div class="brand">
-      <span class="brand__logo"><i class="ti ti-heartbeat" aria-hidden="true"></i></span>
+    <div class="clinic">
+      <span class="clinic__logo"><i class="ti ti-heartbeat" aria-hidden="true"></i></span>
       <span>
-        <span class="brand__name">Perinatal risk</span>
-        <span class="brand__sub">antenatal decision support</span>
+        <span class="clinic__name">{{ clinicName() }}</span>
+        <span class="clinic__sub">perinatal risk assessment</span>
       </span>
     </div>
-    <div class="doctor">
-      <span class="doctor__meta">
-        <span class="doctor__name">Jeff Kirukuu</span>
-        <span class="doctor__role">Doctor</span>
-      </span>
-      <span class="doctor__avatar">AS</span>
-    </div>
+    <div class="doctor">{{ doctorName() }}</div>
   </header>
 
   <div class="grid">
     <form class="card form" (ngSubmit)="$event.preventDefault()">
-      <h2 class="form__title">Assessment</h2>
+      <h2 class="form__title">New assessment</h2>
       <p class="form__hint">Enter what's known during this pregnancy.</p>
+
+      <label class="patient">Patient reference
+        <input [ngModel]="form().patientRef" name="ref" (ngModelChange)="update('patientRef', $event)"
+               placeholder="e.g. ANC-014" />
+      </label>
 
       <fieldset class="group">
         <legend><i class="ti ti-user" aria-hidden="true"></i> Mother</legend>
         <label>Age (years)
-          <input type="number" min="12" max="55"
-                 [ngModel]="form().age" name="age"
-                 (ngModelChange)="update('age', +$event)" />
-        </label>
-        <label>Residence
-          <select [ngModel]="form().residence" name="residence"
-                  (ngModelChange)="update('residence', $event)">
-            <option>Urban</option><option>Rural</option>
-          </select>
-        </label>
-        <label>Education
-          <select [ngModel]="form().education" name="education"
-                  (ngModelChange)="update('education', $event)">
-            <option>No education</option><option>Primary</option>
-            <option>Secondary</option><option>Higher</option>
-          </select>
+          <input type="number" min="12" max="55" [ngModel]="form().age" name="age" (ngModelChange)="update('age', +$event)" />
         </label>
         <label>Ever told high BP
-          <select [ngModel]="form().toldHighBp" name="bp"
-                  (ngModelChange)="update('toldHighBp', $event === 'true' || $event === true)">
+          <select [ngModel]="form().toldHighBp" name="bp" (ngModelChange)="update('toldHighBp', $event)">
             <option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
           </select>
         </label>
@@ -52,24 +35,18 @@
       <fieldset class="group">
         <legend><i class="ti ti-history" aria-hidden="true"></i> Pregnancy history</legend>
         <label>Previous live births
-          <input type="number" min="0" max="16"
-                 [ngModel]="form().parity" name="parity"
-                 (ngModelChange)="update('parity', +$event)" />
+          <input type="number" min="0" max="16" [ngModel]="form().parity" name="parity" (ngModelChange)="update('parity', +$event)" />
         </label>
         <label>Months since last birth
-          <input type="number" min="0" max="240"
-                 [ngModel]="form().intervalMonths" name="interval"
-                 (ngModelChange)="update('intervalMonths', +$event)" />
+          <input type="number" min="0" max="240" [ngModel]="form().intervalMonths" name="interval" (ngModelChange)="update('intervalMonths', +$event)" />
         </label>
         <label>Previous stillbirth
-          <select [ngModel]="form().previousStillbirth" name="still"
-                  (ngModelChange)="update('previousStillbirth', $event)">
+          <select [ngModel]="form().previousStillbirth" name="still" (ngModelChange)="update('previousStillbirth', $event)">
             <option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
           </select>
         </label>
         <label>Previous loss
-          <select [ngModel]="form().previousLoss" name="loss"
-                  (ngModelChange)="update('previousLoss', $event)">
+          <select [ngModel]="form().previousLoss" name="loss" (ngModelChange)="update('previousLoss', $event)">
             <option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
           </select>
         </label>
@@ -78,15 +55,12 @@
       <fieldset class="group">
         <legend><i class="ti ti-baby-carriage" aria-hidden="true"></i> This pregnancy</legend>
         <label>Multiple pregnancy
-          <select [ngModel]="form().multiple" name="multiple"
-                  (ngModelChange)="update('multiple', $event)">
+          <select [ngModel]="form().multiple" name="multiple" (ngModelChange)="update('multiple', $event)">
             <option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
           </select>
         </label>
         <label>ANC visits so far
-          <input type="number" min="0" max="20"
-                 [ngModel]="form().ancVisits" name="anc"
-                 (ngModelChange)="update('ancVisits', +$event)" />
+          <input type="number" min="0" max="20" [ngModel]="form().ancVisits" name="anc" (ngModelChange)="update('ancVisits', +$event)" />
         </label>
       </fieldset>
     </form>
@@ -98,9 +72,7 @@
           <span class="band__pct">{{ result().risk | percent:'1.1-1' }}</span>
           <span class="band__name">{{ result().band }}</span>
         </div>
-        <div class="band__track">
-          <span class="band__fill" [style.width.%]="barWidth()"></span>
-        </div>
+        <div class="band__track"><span class="band__fill" [style.width.%]="barWidth()"></span></div>
         <span class="band__baseline">vs 3.8% population baseline</span>
       </div>
 
@@ -110,20 +82,19 @@
           @for (d of result().drivers; track d.label) {
             <div class="driver">
               <span class="driver__label">{{ d.label }}</span>
-              <span class="driver__track">
-                <span class="driver__fill" [class]="'driver__fill--' + result().role"
-                      [style.width.%]="d.weight / maxWeight() * 100"></span>
-              </span>
+              <span class="driver__track"><span class="driver__fill" [class]="'driver__fill--' + result().role" [style.width.%]="d.weight / maxWeight() * 100"></span></span>
             </div>
-          } @empty {
-            <p class="drivers__empty">No elevated-risk factors entered.</p>
-          }
+          } @empty { <p class="drivers__empty">No elevated-risk factors entered.</p> }
         </div>
       </div>
 
       <div class="card">
         <h3 class="card__title"><i class="ti ti-notes" aria-hidden="true"></i> Suggested follow-up</h3>
         <p class="reco">{{ result().recommendation }}</p>
+        <button class="save" (click)="save()" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save to clinic records' }}
+        </button>
+        @if (saved()) { <p class="saved"><i class="ti ti-check" aria-hidden="true"></i> Saved to {{ clinicName() }}</p> }
         <p class="disclaimer">Research demonstration, not a diagnosis. Follow MOH guidelines and clinical judgement.</p>
       </div>
     </aside>
