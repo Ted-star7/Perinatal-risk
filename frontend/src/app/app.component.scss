@@ -1,0 +1,28 @@
+:host { display: block; font-family: var(--font-sans); }
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 0;
+
+  &__link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-secondary); text-decoration: none;
+    padding: 8px 16px; border-radius: 999px; transition: background 0.15s, color 0.15s;
+    &:hover { background: var(--surface-1); }
+    &--active { background: #2b2621; color: #fff; }
+  }
+  &__spacer { flex: 1; }
+  &__clinic { font-size: 12px; color: var(--text-secondary); }
+  &__logout {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-secondary); background: none;
+    border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; cursor: pointer;
+    &:hover { border-color: var(--accent); color: var(--accent); }
+  }
+}
+
+.page { padding: 1rem 1.5rem 2rem; }

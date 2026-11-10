@@ -1,0 +1,34 @@
+<section class="auth">
+  <aside class="auth__welcome">
+    <div class="auth__brand">
+      <span class="auth__logo"><i class="ti ti-heartbeat" aria-hidden="true"></i></span>
+      <span>Perinatal risk</span>
+    </div>
+    <img class="auth__image" src="maternal.png" alt="Illustration of a mother" />
+    <div class="auth__copy">
+      <h1>Welcome back</h1>
+      <p>Sign in to assess a pregnancy and see your clinic's history.</p>
+    </div>
+  </aside>
+
+  <form class="auth__form" (ngSubmit)="submit()">
+    <h2>Sign in</h2>
+    <p class="auth__hint">Use the email you registered your clinic with.</p>
+
+    <div class="stack">
+      <label>Email
+        <input name="email" type="email" [(ngModel)]="email" required placeholder="amina@clinic.co.ke" />
+      </label>
+      <label>Password
+        <input name="password" type="password" [(ngModel)]="password" required placeholder="Your password" />
+      </label>
+    </div>
+
+    @if (error()) { <p class="auth__error">{{ error() }}</p> }
+
+    <button type="submit" class="auth__submit" [disabled]="busy()">
+      {{ busy() ? 'Signing in…' : 'Sign in' }}
+    </button>
+    <p class="auth__alt">New clinic? <a routerLink="/register">Register</a></p>
+  </form>
+</section>

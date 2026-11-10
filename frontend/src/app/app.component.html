@@ -1,0 +1,22 @@
+@if (auth.isLoggedIn()) {
+  <nav class="tabs">
+    <a routerLink="/assess" routerLinkActive="tabs__link--active" class="tabs__link">
+      <i class="ti ti-stethoscope" aria-hidden="true"></i> Assess
+    </a>
+    <a routerLink="/history" routerLinkActive="tabs__link--active" class="tabs__link">
+      <i class="ti ti-list-details" aria-hidden="true"></i> History
+    </a>
+    <a routerLink="/performance" routerLinkActive="tabs__link--active" class="tabs__link">
+      <i class="ti ti-chart-dots" aria-hidden="true"></i> Model performance
+    </a>
+    <span class="tabs__spacer"></span>
+    <span class="tabs__clinic">{{ auth.session()?.clinic_name }}</span>
+    <button class="tabs__logout" (click)="auth.logout()">
+      <i class="ti ti-logout" aria-hidden="true"></i> Sign out
+    </button>
+  </nav>
+}
+
+<main class="page">
+  <router-outlet></router-outlet>
+</main>

@@ -23,16 +23,11 @@ services:
 
   api:
     build: ./backend
-    env_file: .env
     environment:
       APP_DB_URL: postgresql+psycopg://app:app@app_db:5432/perinatal_app
-      CLEAN_DB_URL: postgresql+psycopg://readonly:readonly@clean_db:5432/perinatal_clean
+      FRONTEND_ORIGIN: http://localhost:4200
     ports: ["8000:8000"]
-    volumes:
-      - ./backend:/code
-      - ./contracts:/code/contracts:ro
-      - ./ml/models:/code/models:ro
-    depends_on: [app_db, clean_db]
+    depends_on: [app_db]
 
 volumes:
   app_db_data:

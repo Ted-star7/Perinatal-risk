@@ -1,8 +1,8 @@
 """Load the combined, cleaned cohorts into the clean DB.
 
 Runs ml/src/dataset.build_cohort() for each cohort (concatenate KE+TZ, clean,
-split) and writes the result as a `combined_<cohort>` table. This is the
-modeling-ready data — what the backoffice / eval portal reads.
+split) and writes the result as a `combined_<cohort>` table — the
+modeling-ready data the backoffice reads.
 
     python db/seed_combined.py
 """

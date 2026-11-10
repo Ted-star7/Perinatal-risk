@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 WORKDIR /code
-ENV PYTHONPATH=/code MODELS_DIR=/code/models
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/code
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

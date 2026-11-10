@@ -1,41 +1,32 @@
 # Frontend (Angular)
 
-Not scaffolded here — generate it with the Angular CLI so you get the exact
-version you want, then commit. The folder is reserved so the mono-repo layout
-and CODEOWNERS are already in place.
+Two dashboards in one app:
 
-## One-time scaffold
+- **clinician** (`/assess`) — the doctor enters pregnancy details and sees the
+  risk ring, the drivers, and a follow-up note.
+- **eval** (`/performance`) — the backoffice: model accuracy per cohort, read
+  from the `model_metrics` table.
+
+## Layout
+
+```
+src/
+├── styles/_tokens.scss                     the warm palette (one source of colour)
+└── app/
+    ├── app.component.*                      shell + tab nav
+    ├── app.routes.ts                        /assess and /performance
+    └── pages/
+        ├── clinician-dashboard/             standalone component (4 files)
+        └── eval-dashboard/                  standalone component (4 files)
+```
+
+## Run
 
 ```bash
-npm install -g @angular/cli
-cd frontend
-ng new perinatal --directory . --routing --style scss --skip-git
-npm install
+npm install     # once
+npm start       # http://localhost:4200
 ```
 
-## Folder layout to create under src/app/
-
-```
-core/api/        # client generated from ../../contracts/openapi.yaml
-                 #   npx @openapitools/openapi-generator-cli generate \
-                 #     -i ../contracts/openapi.yaml -g typescript-angular \
-                 #     -o src/app/core/api
-clinical/        # input form -> result (risk band + drivers) -> recommendation
-                 #   -> feedback buttons (good / viable / unusable)
-eval/            # dashboards: accuracy, calibration, SHAP, usage from /eval/metrics
-```
-
-## Why generate the client from the contract
-
-`core/api` is generated from `contracts/openapi.yaml`, the same schema the
-backend implements. Regenerate whenever the contract changes and the frontend
-and backend can never drift. Do not hand-write API calls.
-
-## Dev
-
-```bash
-ng serve           # http://localhost:4200  (API CORS already allows this)
-```
-
-The backend's stub model is live from day one, so you can build and test the
-full input -> result -> feedback flow before the real model exists.
+The clinician scoring is a placeholder mirroring the EDA drivers. Once the
+backend serves the real model it returns the score + SHAP and the page just
+renders them.
