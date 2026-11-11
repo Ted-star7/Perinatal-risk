@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
 from app.database import engine, init_db
 from app.routers import accounts, predictions
 from app.seeding import seed_cohorts
@@ -23,6 +24,8 @@ app = FastAPI(title="Perinatal risk API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
+    # Prod: the deployed frontend origin (set FRONTEND_ORIGIN on Render).
+    allow_origins=[settings.frontend_origin],
     # Dev: allow any localhost port (4200 for ng serve, 3000 for the preview).
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
     allow_methods=["*"],

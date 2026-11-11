@@ -8,8 +8,9 @@ import {
   RegisterBody,
   Session,
 } from './models';
+import { environment } from '../../environments/environment';
 
-export const API_BASE = 'http://localhost:8000';
+export const API_BASE = environment.apiBase;
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
