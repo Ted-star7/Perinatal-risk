@@ -7,13 +7,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import init_db
+from app.database import engine, init_db
 from app.routers import accounts, predictions
+from app.seeding import seed_cohorts
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    init_db()               # clinics, doctors, predictions
+    seed_cohorts(engine)    # combined_* cohort tables (same DB)
     yield
 
 
