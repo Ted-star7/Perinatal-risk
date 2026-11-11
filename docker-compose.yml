@@ -10,25 +10,18 @@ services:
       - app_db_data:/var/lib/postgresql/data
       - ./db/app:/docker-entrypoint-initdb.d
 
-  clean_db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: readonly
-      POSTGRES_PASSWORD: readonly
-      POSTGRES_DB: perinatal_clean
-    ports: ["5433:5432"]
-    volumes:
-      - clean_db_data:/var/lib/postgresql/data
-      - ./db/clean:/docker-entrypoint-initdb.d
-
   api:
     build: ./backend
     environment:
       APP_DB_URL: postgresql+psycopg://app:app@app_db:5432/perinatal_app
       FRONTEND_ORIGIN: http://localhost:4200
     ports: ["8000:8000"]
+    volumes:
+      # mounted read-only so the backend can build + seed the cohorts on startup
+      - ./ml:/code/ml:ro
+      - ./contracts:/code/contracts:ro
+      - ./data:/code/data:ro
     depends_on: [app_db]
 
 volumes:
   app_db_data:
-  clean_db_data:

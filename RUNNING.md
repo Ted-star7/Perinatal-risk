@@ -34,9 +34,12 @@ Put the shared DHS CSVs into `data\processed\` (Teddy sends the zip — unzip th
 docker compose up --build        # first time: builds the API image
 ```
 This starts:
-- `app_db`  — Postgres on port 5432 (clinics, doctors, predictions)
-- `clean_db` — Postgres on port 5433 (the cohort data)
-- `api`     — the FastAPI backend on **http://localhost:8000**
+- `app_db` — one Postgres database on port 5432 holding **everything**:
+  clinics, doctors, predictions, the combined cohort tables, and the metrics.
+- `api` — the FastAPI backend on **http://localhost:8000**
+
+On startup the API **auto-loads** the combined cohort tables (`combined_*`) into
+the database, as long as the CSVs are in `data\processed\`. No manual seed step.
 
 Leave this terminal running. Check the API: open http://localhost:8000/health
 — it should say `{"status":"ok"}`.
@@ -69,12 +72,8 @@ docker compose up          # start again later (data is still there)
 |------|-----------|
 | Frontend | http://localhost:4200 |
 | Backend API | http://localhost:8000 (docs at /docs) |
-| app_db (Postgres) | localhost:5432 · user/pass `app`/`app` |
-| clean_db (Postgres) | localhost:5433 · user/pass `readonly`/`readonly` |
+| Database (Postgres) | localhost:5432 · user/pass `app`/`app` · db `perinatal_app` |
 
-## Loading the cohort data into clean_db (optional, for the eval side)
-
-```powershell
-pip install -r db\requirements.txt
-python db\seed_combined.py
-```
+View everything in TablePlus: connect to `127.0.0.1:5432`, user/pass `app`/`app`,
+database `perinatal_app`, schema **public** — you'll see the clinics, doctors,
+predictions, and the `combined_*` cohort tables all in one place.

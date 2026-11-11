@@ -1,3 +1,0 @@
--- Clean data DB: holds the cleaned DHS cohorts (the feature store).
--- The six cohort tables are created and loaded by db/seed.py from the CSVs in
--- data/processed/ — see db/README.md. This file just prepares the database.
