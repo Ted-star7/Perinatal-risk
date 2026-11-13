@@ -1,0 +1,43 @@
+# Render blueprint — one managed Postgres + the FastAPI backend + the Angular
+# frontend. Connect this repo on https://render.com (New → Blueprint) and Render
+# provisions all three from this file. See DEPLOY notes in chat.
+#
+# Everyone (Teddy's pushes, every clinic's saved assessment, every model's
+# metrics) then reads/writes this ONE hosted database instead of local copies.
+
+databases:
+  - name: perinatal-db
+    plan: free            # free Postgres expires after 30 days — fine for the demo
+    databaseName: perinatal_app
+    user: app
+
+services:
+  # ---- Backend API (FastAPI, Docker) -----------------------------------
+  - type: web
+    name: perinatal-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: APP_DB_URL
+        fromDatabase:
+          name: perinatal-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true          # Render makes a strong secret, kept out of git
+      - key: FRONTEND_ORIGIN
+        sync: false                   # set to the perinatal-ui URL after first deploy
+
+  # ---- Frontend (Angular, static site) ---------------------------------
+  - type: web
+    name: perinatal-ui
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist/perinatal-ui/browser
+    routes:
+      - type: rewrite               # SPA: client-side routes fall back to index.html
+        source: /*
+        destination: /index.html

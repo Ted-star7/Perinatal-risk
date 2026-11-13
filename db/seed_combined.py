@@ -19,14 +19,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from ml.src.dataset import COHORTS, build_cohort  # noqa: E402
 
-CLEAN_DB_URL = os.getenv(
-    "CLEAN_DB_URL",
-    "postgresql+psycopg://readonly:readonly@localhost:5433/perinatal_clean",
+APP_DB_URL = os.getenv(
+    "APP_DB_URL",
+    "postgresql+psycopg://app:app@localhost:5432/perinatal_app",
 )
 
 
 def main() -> None:
-    engine = create_engine(CLEAN_DB_URL)
+    engine = create_engine(APP_DB_URL)
     for name in COHORTS:
         df = build_cohort(name)
         table = f"combined_{name}"
