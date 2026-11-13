@@ -1,25 +1,30 @@
-"""Save a model's results into the app DB.
+"""Save a model's results to the shared, hosted metrics store.
 
-Call this at the end of a modeling notebook so the eval dashboard can read the
-result. One row per (cohort, algorithm) — re-running replaces it (upsert), so
-the table always holds the current numbers.
+Call this at the end of a modeling notebook. It POSTs one row to the hosted
+API's /metrics endpoint, so everyone's results collect in the ONE hosted
+database and the team can compare all nine models in one place (GET /metrics or
+the eval dashboard) — no database password needed on your machine.
 
     from db.metrics import save_metrics
     save_metrics("perinatal", "gradient_boosting",
                  pr_auc=0.41, roc_auc=0.78, recall_at_flag=0.33,
                  beats_checklist=True, test_events=6189)
+
+Override the target with METRICS_API_URL (e.g. http://localhost:8000 when
+running the backend locally). If the server requires a key, set METRICS_KEY.
 """
 
 from __future__ import annotations
 
+import json
 import os
+import urllib.error
+import urllib.request
 
-from sqlalchemy import create_engine, text
-
-APP_DB_URL = os.getenv(
-    "APP_DB_URL",
-    "postgresql+psycopg://app:app@localhost:5432/perinatal_app",
-)
+# The PUBLIC API URL — not a secret, no credentials. Points at production so
+# every teammate's save lands in the same hosted database.
+METRICS_API_URL = os.getenv("METRICS_API_URL", "https://perinatal-api.onrender.com")
+METRICS_KEY = os.getenv("METRICS_KEY", "")
 
 
 def save_metrics(
@@ -33,38 +38,33 @@ def save_metrics(
     test_events: int,
     is_best: bool = False,
 ) -> None:
-    """Upsert one model's metrics into model_metrics."""
-    engine = create_engine(APP_DB_URL)
-    stmt = text(
-        """
-        INSERT INTO model_metrics
-            (cohort, algorithm, pr_auc, roc_auc, recall_at_flag,
-             beats_checklist, is_best, test_events, updated_at)
-        VALUES
-            (:cohort, :algorithm, :pr_auc, :roc_auc, :recall_at_flag,
-             :beats_checklist, :is_best, :test_events, now())
-        ON CONFLICT (cohort, algorithm) DO UPDATE SET
-            pr_auc          = EXCLUDED.pr_auc,
-            roc_auc         = EXCLUDED.roc_auc,
-            recall_at_flag  = EXCLUDED.recall_at_flag,
-            beats_checklist = EXCLUDED.beats_checklist,
-            is_best         = EXCLUDED.is_best,
-            test_events     = EXCLUDED.test_events,
-            updated_at      = now()
-        """
+    """POST one model's metrics to the shared /metrics endpoint (upsert)."""
+    payload = {
+        "cohort": cohort,
+        "algorithm": algorithm,
+        "pr_auc": float(pr_auc),
+        "roc_auc": float(roc_auc),
+        "recall_at_flag": float(recall_at_flag),
+        "beats_checklist": bool(beats_checklist),
+        "test_events": int(test_events),
+        "is_best": bool(is_best),
+    }
+    headers = {"Content-Type": "application/json"}
+    if METRICS_KEY:
+        headers["X-Metrics-Key"] = METRICS_KEY
+
+    req = urllib.request.Request(
+        f"{METRICS_API_URL}/metrics",
+        data=json.dumps(payload).encode(),
+        headers=headers,
+        method="POST",
     )
-    with engine.begin() as con:
-        con.execute(
-            stmt,
-            {
-                "cohort": cohort,
-                "algorithm": algorithm,
-                "pr_auc": pr_auc,
-                "roc_auc": roc_auc,
-                "recall_at_flag": recall_at_flag,
-                "beats_checklist": beats_checklist,
-                "is_best": is_best,
-                "test_events": test_events,
-            },
+    try:
+        with urllib.request.urlopen(req, timeout=90) as resp:  # noqa: S310 (fixed host)
+            json.loads(resp.read())
+        print(f"saved metrics for {cohort} / {algorithm} -> {METRICS_API_URL}")
+    except urllib.error.URLError as exc:
+        print(
+            f"could not save metrics ({exc}). The API may be waking up (free tier) "
+            f"— re-run this cell, or set METRICS_API_URL to a reachable backend."
         )
-    print(f"saved metrics for {cohort} / {algorithm}")

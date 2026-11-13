@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import engine, init_db
-from app.routers import accounts, predictions
+from app.routers import accounts, metrics, predictions
 from app.seeding import seed_cohorts
 
 
@@ -34,6 +34,7 @@ app.add_middleware(
 
 app.include_router(accounts.router)
 app.include_router(predictions.router)
+app.include_router(metrics.router)
 
 
 @app.get("/health")
