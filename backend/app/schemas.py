@@ -57,3 +57,15 @@ class PredictResponse(BaseModel):
     recommendation: str
     created_at: datetime
     patient_ref: str | None = None
+
+
+# ---- model metrics (one row per cohort + algorithm; modeling notebooks post here) ----
+class MetricsIn(BaseModel):
+    cohort: str
+    algorithm: str
+    pr_auc: float
+    roc_auc: float
+    recall_at_flag: float
+    beats_checklist: bool
+    test_events: int
+    is_best: bool = False
