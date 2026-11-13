@@ -1,13 +1,18 @@
+
 """Shared model-metrics endpoint.
 
-Every modeling notebook posts its result here (via db.metrics.save_metrics), so
-all nine models' numbers collect in the one hosted database and the team can
-compare them in one place — GET /metrics, or the eval dashboard.
+Modeling notebooks submit their results through db.metrics.save_metrics.
+The results are stored centrally so the team can compare model performance
+through GET /metrics and the evaluation dashboard.
 
-One row per (cohort, algorithm); re-posting replaces it (upsert).
+One row per (cohort, algorithm). Re-submitting a result updates that row.
 """
 
 from __future__ import annotations
+
+import json
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import text
@@ -18,6 +23,7 @@ from app.database import get_db
 from app.schemas import MetricsIn
 
 router = APIRouter(tags=["metrics"])
+
 
 _UPSERT = text(
     """
@@ -45,17 +51,37 @@ def save_metric(
     x_metrics_key: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ) -> dict:
-    # Optional shared key: if METRICS_KEY is set on the server, callers must match
-    # it. Left unset (default) the endpoint is open — fine for the capstone demo.
+    """Save or update a model's evaluation results."""
+
     if settings.metrics_key and x_metrics_key != settings.metrics_key:
-        raise HTTPException(status_code=401, detail="bad or missing X-Metrics-Key")
+        raise HTTPException(
+            status_code=401,
+            detail="Bad or missing X-Metrics-Key",
+        )
+
     db.execute(_UPSERT, body.model_dump())
     db.commit()
+
     return {"saved": f"{body.cohort}/{body.algorithm}"}
 
 
 @router.get("/metrics")
 def list_metrics(db: Session = Depends(get_db)) -> list[dict]:
+    """Retrieve shared model metrics or read from the local database."""
+
+    # In local development, retrieve the shared metrics from the hosted API.
+    if settings.metrics_source_url:
+        try:
+            with urlopen(settings.metrics_source_url, timeout=20) as response:
+                return json.loads(response.read().decode("utf-8"))
+
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Could not retrieve shared model metrics: {exc}",
+            ) from exc
+
+    # Otherwise, retrieve metrics from this API's own database.
     rows = db.execute(
         text(
             "SELECT cohort, algorithm, pr_auc, roc_auc, recall_at_flag, "
@@ -63,4 +89,5 @@ def list_metrics(db: Session = Depends(get_db)) -> list[dict]:
             "FROM model_metrics ORDER BY cohort, algorithm"
         )
     ).mappings().all()
-    return [dict(r) for r in rows]
+
+    return [dict(row) for row in rows]

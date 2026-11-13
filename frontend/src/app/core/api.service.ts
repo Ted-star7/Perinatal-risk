@@ -12,6 +12,18 @@ import { environment } from '../../environments/environment';
 
 export const API_BASE = environment.apiBase;
 
+export interface ModelMetricResponse {
+  cohort: string;
+  algorithm: string;
+  pr_auc: number;
+  roc_auc: number;
+  recall_at_flag: number;
+  beats_checklist: boolean;
+  is_best: boolean;
+  test_events: number;
+  updated_at: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
@@ -31,4 +43,9 @@ export class ApiService {
   history(): Observable<PredictResponse[]> {
     return this.http.get<PredictResponse[]>(`${API_BASE}/history`);
   }
+
+  metrics(): Observable<ModelMetricResponse[]> {
+    return this.http.get<ModelMetricResponse[]>(`${API_BASE}/metrics`);
+  }
+
 }
