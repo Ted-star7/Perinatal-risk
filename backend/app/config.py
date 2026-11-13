@@ -29,6 +29,8 @@ class Settings:
     token_ttl_hours: int = 12
     # Where the Angular dev server runs (for CORS).
     frontend_origin: str = os.getenv("FRONTEND_ORIGIN", "http://localhost:4200")
+    # Optional shared key for POST /metrics. Unset = open (fine for the demo).
+    metrics_key: str = os.getenv("METRICS_KEY", "")
 
 
 settings = Settings()
