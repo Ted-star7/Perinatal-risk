@@ -15,6 +15,7 @@ services:
     environment:
       APP_DB_URL: postgresql+psycopg://app:app@app_db:5432/perinatal_app
       FRONTEND_ORIGIN: http://localhost:4200
+      METRICS_SOURCE_URL: https://perinatal-api.onrender.com/metrics #added
     ports: ["8000:8000"]
     volumes:
       # mounted read-only so the backend can build + seed the cohorts on startup

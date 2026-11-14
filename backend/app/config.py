@@ -1,3 +1,4 @@
+
 """Backend settings, read from the environment (see .env.example)."""
 
 from __future__ import annotations
@@ -21,16 +22,29 @@ def _normalize_db_url(url: str) -> str:
 
 class Settings:
     app_db_url: str = _normalize_db_url(
-        os.getenv("APP_DB_URL", "postgresql+psycopg://app:app@localhost:5432/perinatal_app")
+        os.getenv(
+            "APP_DB_URL",
+            "postgresql+psycopg://app:app@localhost:5432/perinatal_app",
+        )
     )
+
     # Signing secret for auth tokens. Override in production.
     jwt_secret: str = os.getenv("JWT_SECRET", "dev-secret-change-me")
     jwt_algorithm: str = "HS256"
     token_ttl_hours: int = 12
+
     # Where the Angular dev server runs (for CORS).
-    frontend_origin: str = os.getenv("FRONTEND_ORIGIN", "http://localhost:4200")
-    # Optional shared key for POST /metrics. Unset = open (fine for the demo).
+    frontend_origin: str = os.getenv(
+        "FRONTEND_ORIGIN",
+        "http://localhost:4200",
+    )
+
+    # Optional shared key for POST /metrics.
     metrics_key: str = os.getenv("METRICS_KEY", "")
+
+    # Optional remote source for shared metrics in local development.
+    # If unset, the API reads metrics from its own database.
+    metrics_source_url: str = os.getenv("METRICS_SOURCE_URL", "")
 
 
 settings = Settings()
