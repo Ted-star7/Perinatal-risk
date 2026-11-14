@@ -1,22 +1,21 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ApiService } from '../../core/api.service';
-import { MetricsRow } from '../../core/models';
 
-/** One cohort with its algorithms ranked by PR-AUC (best first). */
-interface CohortGroup {
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ApiService, ModelMetricResponse } from '../../core/api.service';
+
+/** Model evaluation metrics displayed in simple, understandable language. */
+export interface ModelMetrics {
   cohort: string;
-  rows: MetricsRow[];
+  algorithm: string;
+  prAuc: number;
+  rocAuc: number;
+  recallAtFlag: number;
+  beatsChecklist: boolean;
+  isBest: boolean;
   testEvents: number;
+  updatedAt: string;
 }
 
-const COHORT_ORDER = ['perinatal', 'perinatal_anc', 'lbw'];
-
-/**
- * Backoffice dashboard (dashboard 2 of 2) — for the team and the presentation.
- * Reads the shared /metrics store so every model each person has published shows
- * here, ranked by PR-AUC per cohort. The best model per cohort is marked.
- */
 @Component({
   selector: 'app-eval-dashboard',
   standalone: true,
@@ -24,50 +23,67 @@ const COHORT_ORDER = ['perinatal', 'perinatal_anc', 'lbw'];
   templateUrl: './eval-dashboard.component.html',
   styleUrl: './eval-dashboard.component.scss',
 })
-export class EvalDashboardComponent {
-  private api = inject(ApiService);
-
+export class EvalDashboardComponent implements OnInit {
+  readonly metrics = signal<ModelMetrics[]>([]);
   readonly loading = signal(true);
-  readonly failed = signal(false);
-  private readonly rows = signal<MetricsRow[]>([]);
+  readonly error = signal('');
 
-  /** Rows grouped by cohort, each cohort's algorithms sorted best-PR-AUC first. */
-  readonly cohorts = computed<CohortGroup[]>(() => {
-    const byCohort = new Map<string, MetricsRow[]>();
-    for (const r of this.rows()) {
-      (byCohort.get(r.cohort) ?? byCohort.set(r.cohort, []).get(r.cohort)!).push(r);
-    }
-    const order = (c: string) => {
-      const i = COHORT_ORDER.indexOf(c);
-      return i === -1 ? COHORT_ORDER.length : i;
-    };
-    return [...byCohort.keys()]
-      .sort((a, b) => order(a) - order(b))
-      .map((cohort) => {
-        const rows = byCohort.get(cohort)!.slice().sort((a, b) => b.pr_auc - a.pr_auc);
-        return { cohort, rows, testEvents: rows[0].test_events };
-      });
-  });
+  constructor(private api: ApiService) {}
 
-  constructor() {
+  ngOnInit(): void {
+    this.loadMetrics();
+  }
+
+  /** Retrieve the latest shared model evaluation results. */
+  loadMetrics(): void {
+    this.loading.set(true);
+    this.error.set('');
+
     this.api.metrics().subscribe({
-      next: (r) => {
-        this.rows.set(r);
+      next: (records: ModelMetricResponse[]) => {
+        const mappedRecords: ModelMetrics[] = records.map((record) => ({
+          cohort: record.cohort,
+          algorithm: record.algorithm,
+          prAuc: record.pr_auc,
+          rocAuc: record.roc_auc,
+          recallAtFlag: record.recall_at_flag,
+          beatsChecklist: record.beats_checklist,
+          isBest: record.is_best,
+          testEvents: record.test_events,
+          updatedAt: record.updated_at,
+        }));
+
+        this.metrics.set(mappedRecords);
         this.loading.set(false);
       },
-      error: () => {
-        this.failed.set(true);
+      error: (err) => {
+        console.error('Could not load model metrics:', err);
+        this.error.set(
+          'Unable to load model performance results. Please try again.'
+        );
         this.loading.set(false);
       },
     });
   }
 
-  /** The winning algorithm in a cohort is the first row (highest PR-AUC). */
-  isBest(group: CohortGroup, row: MetricsRow): boolean {
-    return group.rows[0] === row;
-  }
+  /** Convert technical cohort identifiers into familiar descriptions. */
+ cohortLabel(cohort: string): string {
+  const labels: Record<string, string> = {
+    lbw: 'Babies born weighing less than 2.5 kg',
+    perinatal: 'Risk of death around birth',
+    perinatal_anc: 'Risk of death around birth (with pregnancy check-up information)',
+  };
 
-  prettyAlgo(algorithm: string): string {
-    return algorithm.replace(/_/g, ' ');
+  return labels[cohort] ?? cohort;
+}
+
+  /** Convert technical algorithm identifiers into readable names. */
+  algorithmLabel(algorithm: string): string {
+    const labels: Record<string, string> = {
+      gradient_boosting: 'Gradient Boosting',
+      random_forest: 'Random Forest',
+    };
+
+    return labels[algorithm] ?? algorithm;
   }
 }
