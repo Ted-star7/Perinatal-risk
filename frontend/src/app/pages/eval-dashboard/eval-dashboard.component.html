@@ -1,55 +1,131 @@
+
 <section class="eval">
   <header class="eval__head">
-    <h2 class="eval__title">Model performance</h2>
+    <h2 class="eval__title">How well our prediction models work</h2>
     <p class="eval__hint">
-      PR-AUC on the held-out test split, per cohort — higher is better.
-      The best model in each cohort is marked. Live from the shared metrics store.
+      These results show how well our models identify babies who may need
+      additional attention.
     </p>
+
+    <button type="button" (click)="loadMetrics()" [disabled]="loading()">
+      {{ loading() ? 'Refreshing...' : 'Refresh results' }}
+    </button>
   </header>
 
   @if (loading()) {
-    <p class="eval__state">Loading metrics…</p>
-  } @else if (failed()) {
-    <p class="eval__state">Couldn’t reach the metrics API. If it’s the free tier
-      it may be waking up — refresh in a moment.</p>
-  } @else if (cohorts().length === 0) {
-    <p class="eval__state">No metrics published yet. Run the Step 5 save cell in a
-      modeling notebook and they’ll appear here.</p>
+    <p class="eval__status">Loading model results...</p>
+  } @else if (error()) {
+    <div class="eval__error" role="alert">
+      {{ error() }}
+      <button type="button" (click)="loadMetrics()">Try again</button>
+    </div>
+  } @else if (metrics().length === 0) {
+    <p class="eval__status">No model results are available yet.</p>
   } @else {
     <div class="cards">
-      @for (g of cohorts(); track g.cohort) {
-        <article class="metric">
-          <div class="metric__cohort">{{ g.cohort }}</div>
-          <div class="metric__foot">{{ g.testEvents | number }} test events</div>
+      @for (m of metrics(); track m.cohort + '-' + m.algorithm) {
+        <article class="metric" [class.metric--best]="m.isBest">
 
-          <table class="algos">
-            <thead>
-              <tr>
-                <th>model</th>
-                <th>PR-AUC</th>
-                <th>ROC-AUC</th>
-                <th>recall</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (r of g.rows; track r.algorithm) {
-                <tr [class.algos__best]="isBest(g, r)">
-                  <td class="algos__name">
-                    {{ prettyAlgo(r.algorithm) }}
-                    @if (isBest(g, r)) { <span class="algos__badge">best</span> }
-                  </td>
-                  <td class="algos__num">{{ r.pr_auc | number:'1.3-3' }}</td>
-                  <td class="algos__num">{{ r.roc_auc | number:'1.3-3' }}</td>
-                  <td class="algos__num">{{ r.recall_at_flag | number:'1.2-2' }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+          <div class="metric__cohort">
+            {{ cohortLabel(m.cohort) }}
+          </div>
+
+          <div class="metric__algorithm">
+            Prediction approach: {{ algorithmLabel(m.algorithm) }}
+          </div>
+
+          @if (m.isBest) {
+            <div class="metric__best">Best-performing model</div>
+          }
+
+          <div class="metric__value">
+            {{ m.prAuc | number:'1.3-3' }}
+          </div>
+
+          <div class="metric__label">
+            Finding affected cases
+          </div>
+
+          <div class="metric__description">
+            Higher scores mean the model is better at identifying affected cases.
+          </div>
+
+          <div class="metric__row">
+            <span>Ability to distinguish outcomes</span>
+            <strong>{{ m.rocAuc | number:'1.3-3' }}</strong>
+          </div>
+
+          <div class="metric__row">
+            <span>Affected cases identified</span>
+            <strong>{{ m.recallAtFlag | percent:'1.1-1' }}</strong>
+          </div>
+
+          <div class="metric__row">
+            <span>Compared with the standard checklist</span>
+            <strong>
+              {{ m.beatsChecklist ? 'Better performance' : 'Not better yet' }}
+            </strong>
+          </div>
+
+          <div class="metric__foot">
+            {{ m.testEvents | number }} affected cases used for testing
+          </div>
+
+          <div class="metric__updated">
+            Last updated: {{ m.updatedAt | date:'medium' }}
+          </div>
         </article>
       }
     </div>
   }
 
-  <p class="eval__todo">Charts (calibration, SHAP, confusion) render here once the
-    modeling stage publishes them.</p>
+  <section class="eval__guide">
+  <h3>Understanding these results</h3>
+
+  <div class="eval__guide-grid">
+    <div>
+      <strong>Finding affected cases</strong>
+      <p>
+        Shows how well the model identifies less common outcomes,
+        such as low birth weight or perinatal death.
+      </p>
+    </div>
+
+    <div>
+      <strong>Ability to distinguish outcomes</strong>
+      <p>
+        Shows how well the model separates cases with the outcome
+        from cases without it. Higher values are generally better.
+      </p>
+    </div>
+
+    <div>
+      <strong>Affected cases identified</strong>
+      <p>
+        Shows the percentage of affected cases the model successfully
+        identifies at the selected alert threshold.
+      </p>
+    </div>
+
+    <div>
+      <strong>Best-performing model</strong>
+      <p>
+        Highlights the model selected as the best within the current
+        evaluation results.
+      </p>
+    </div>
+  </div>
+
+  <p class="eval__disclaimer">
+    These results measure model performance on test data. They do not
+    represent the probability of an individual mother or baby experiencing
+    a health outcome. Clinical decisions should always involve qualified
+    healthcare professionals.
+  </p>
+</section>
+
+
+  <footer class="eval__todo">
+    Results are retrieved from the shared AfyaNova model evaluation system.
+  </footer>
 </section>

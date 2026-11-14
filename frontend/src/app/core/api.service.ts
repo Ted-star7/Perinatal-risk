@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   LoginBody,
-  MetricsRow,
   PredictRequest,
   PredictResponse,
   RegisterBody,
@@ -12,6 +11,18 @@ import {
 import { environment } from '../../environments/environment';
 
 export const API_BASE = environment.apiBase;
+
+export interface ModelMetricResponse {
+  cohort: string;
+  algorithm: string;
+  pr_auc: number;
+  roc_auc: number;
+  recall_at_flag: number;
+  beats_checklist: boolean;
+  is_best: boolean;
+  test_events: number;
+  updated_at: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -33,7 +44,8 @@ export class ApiService {
     return this.http.get<PredictResponse[]>(`${API_BASE}/history`);
   }
 
-  metrics(): Observable<MetricsRow[]> {
-    return this.http.get<MetricsRow[]>(`${API_BASE}/metrics`);
+  metrics(): Observable<ModelMetricResponse[]> {
+    return this.http.get<ModelMetricResponse[]>(`${API_BASE}/metrics`);
   }
+
 }
