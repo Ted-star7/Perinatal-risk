@@ -13,13 +13,19 @@
   @if (loading()) {
     <p class="history__empty">Loading…</p>
   } @else if (rows().length === 0) {
-    <p class="history__empty">No assessments yet. Start one from the assess tab.</p>
+    <p class="history__empty">No assessments yet. Start one from the triage tab.</p>
   } @else {
+    <div class="filters">
+      <button class="filters__btn" [class.filters__btn--on]="filter() === 'all'" (click)="setFilter('all')">All ({{ total() }})</button>
+      <button class="filters__btn" [class.filters__btn--on]="filter() === 'high'" (click)="setFilter('high')">High risk</button>
+      <button class="filters__btn" [class.filters__btn--on]="filter() === 'moderate'" (click)="setFilter('moderate')">Moderate</button>
+      <button class="filters__btn" [class.filters__btn--on]="filter() === 'low'" (click)="setFilter('low')">Low</button>
+    </div>
     <div class="rows">
       <div class="row row--head">
         <span>Patient</span><span>Risk</span><span>Band</span><span>Top driver</span><span>When</span>
       </div>
-      @for (r of rows(); track r.id) {
+      @for (r of filteredRows(); track r.id) {
         <div class="row">
           <span class="ref">{{ r.patient_ref || '—' }}</span>
           <span>{{ r.risk | percent:'1.1-1' }}</span>
@@ -27,6 +33,8 @@
           <span class="driver">{{ r.top_drivers.length ? r.top_drivers[0].label : '—' }}</span>
           <span class="when">{{ r.created_at | date:'MMM d, HH:mm' }}</span>
         </div>
+      } @empty {
+        <div class="row"><span class="ref">No assessments in this band.</span></div>
       }
     </div>
   }

@@ -29,7 +29,7 @@ export interface PredictRequest {
   previous_stillbirth: boolean;
   previous_loss: boolean;
   multiple: boolean;
-  told_high_bp: boolean;
+  told_high_bp?: boolean;
   anc_visits: number;
 }
 

@@ -13,13 +13,14 @@ export const routes: Routes = [
       import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
   {
-    path: 'assess',
+    path: 'triage',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/clinician-dashboard/clinician-dashboard.component').then(
         (m) => m.ClinicianDashboardComponent,
       ),
   },
+  { path: 'assess', redirectTo: 'triage', pathMatch: 'full' },
   {
     path: 'history',
     canActivate: [authGuard],
@@ -36,6 +37,6 @@ export const routes: Routes = [
         (m) => m.EvalDashboardComponent,
       ),
   },
-  { path: '', redirectTo: 'assess', pathMatch: 'full' },
-  { path: '**', redirectTo: 'assess' },
+  { path: '', redirectTo: 'triage', pathMatch: 'full' },
+  { path: '**', redirectTo: 'triage' },
 ];
