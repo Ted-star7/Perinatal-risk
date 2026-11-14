@@ -47,3 +47,16 @@ export interface PredictResponse {
   created_at: string;
   patient_ref?: string;
 }
+
+/** One model's result from the shared /metrics store (one row per cohort+algorithm). */
+export interface MetricsRow {
+  cohort: string;
+  algorithm: string;
+  pr_auc: number;
+  roc_auc: number;
+  recall_at_flag: number;
+  beats_checklist: boolean;
+  is_best: boolean;
+  test_events: number;
+  updated_at: string;
+}

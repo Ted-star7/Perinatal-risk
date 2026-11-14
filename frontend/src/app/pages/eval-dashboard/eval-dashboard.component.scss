@@ -10,11 +10,12 @@
   &__title { font-size: 17px; font-weight: 500; margin: 0; }
   &__hint { font-size: 12px; color: var(--text-secondary); margin: 2px 0 1.25rem; }
   &__todo { font-size: 12px; color: var(--text-secondary); margin-top: 1.25rem; }
+  &__state { font-size: 13px; color: var(--text-secondary); padding: 1rem 0; }
 }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 14px;
 }
 
@@ -24,14 +25,45 @@
   border-radius: var(--radius-card);
   padding: 1.1rem 1.25rem;
 
-  &__cohort { font-size: 12px; color: var(--text-secondary); }
-  &__value { font-size: 30px; font-weight: 500; margin-top: 2px; }
-  &__label { font-size: 11px; color: var(--text-muted); }
-  &__row {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 12px; color: var(--text-secondary);
-    margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+  &__cohort { font-size: 13px; font-weight: 500; }
+  &__foot { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+}
+
+.algos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 12px;
+
+  thead th {
+    text-align: right;
+    font-weight: 400;
+    color: var(--text-muted);
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--border);
   }
-  &__flag { color: var(--text-secondary); &--yes { color: var(--success); } }
-  &__foot { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+  thead th:first-child { text-align: left; }
+
+  tbody td {
+    padding: 6px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  &__name { text-transform: capitalize; }
+  &__num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  &__best td { color: var(--text-primary); font-weight: 500; }
+
+  &__badge {
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 999px;
+    padding: 0 6px;
+    vertical-align: middle;
+  }
 }
