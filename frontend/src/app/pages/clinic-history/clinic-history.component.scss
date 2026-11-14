@@ -36,3 +36,15 @@
   &--moderate { background: var(--bg-warning); color: var(--warning); }
   &--high { background: var(--bg-danger); color: var(--danger); }
 }
+
+// band filters
+.filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.filters__btn {
+  font-size: 12px; font-family: var(--font-sans);
+  padding: 6px 14px; border-radius: 999px; cursor: pointer;
+  background: var(--surface-2); color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.filters__btn--on {
+  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
+}

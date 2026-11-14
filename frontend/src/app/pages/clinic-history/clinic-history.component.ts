@@ -19,8 +19,19 @@ export class ClinicHistoryComponent {
   readonly rows = signal<PredictResponse[]>([]);
   readonly loading = signal(true);
 
+  /** Current risk-band filter: 'all' | 'high' | 'moderate' | 'low'. */
+  readonly filter = signal<'all' | 'high' | 'moderate' | 'low'>('all');
+  readonly filteredRows = computed(() => {
+    const f = this.filter();
+    return f === 'all' ? this.rows() : this.rows().filter((r) => r.risk_band === f);
+  });
+
   readonly total = computed(() => this.rows().length);
   readonly highCount = computed(() => this.rows().filter((r) => r.risk_band === 'high').length);
+
+  setFilter(f: 'all' | 'high' | 'moderate' | 'low'): void {
+    this.filter.set(f);
+  }
 
   constructor() {
     this.api.history().subscribe({

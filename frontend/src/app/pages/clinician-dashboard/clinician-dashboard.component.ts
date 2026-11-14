@@ -12,7 +12,6 @@ interface Assessment {
   previousStillbirth: boolean;
   previousLoss: boolean;
   multiple: boolean;
-  toldHighBp: boolean;
   ancVisits: number;
 }
 
@@ -37,10 +36,35 @@ export class ClinicianDashboardComponent {
   readonly form = signal<Assessment>({
     patientRef: '', age: 29, parity: 1, intervalMonths: 30,
     previousStillbirth: false, previousLoss: false, multiple: false,
-    toldHighBp: false, ancVisits: 3,
+    ancVisits: 3,
   });
 
-  readonly result = computed<Result>(() => this.assess(this.form()));
+  // --- validation: required numeric fields, each must be a number in range ---
+  readonly errors = computed<Record<string, string>>(() => {
+    const f = this.form();
+    const e: Record<string, string> = {};
+    const num = (v: number, lo: number, hi: number, label: string): string => {
+      if (v === null || v === undefined || Number.isNaN(v)) return `${label} is required`;
+      if (v < lo || v > hi) return `${label} must be between ${lo} and ${hi}`;
+      return '';
+    };
+    const checks: [keyof Assessment, number, number, string][] = [
+      ['age', 12, 55, 'Age'],
+      ['parity', 0, 16, 'Previous live births'],
+      ['intervalMonths', 0, 240, 'Months since last birth'],
+      ['ancVisits', 0, 20, 'ANC visits'],
+    ];
+    for (const [key, lo, hi, label] of checks) {
+      const msg = num(f[key] as number, lo, hi, label);
+      if (msg) e[key] = msg;
+    }
+    return e;
+  });
+  readonly isValid = computed(() => Object.keys(this.errors()).length === 0);
+
+  readonly result = computed<Result | null>(() =>
+    this.isValid() ? this.assess(this.form()) : null,
+  );
   readonly saving = signal(false);
   readonly saved = signal(false);
 
@@ -49,17 +73,29 @@ export class ClinicianDashboardComponent {
     this.saved.set(false);
   }
 
-  barWidth(): number { return Math.min(100, Math.max(6, this.result().risk * 100 * 7)); }
-  maxWeight(): number { return Math.max(...this.result().drivers.map((d) => d.weight), 1); }
+  /** Coerce a number input; empty string becomes NaN so validation flags it. */
+  num(value: string): number {
+    return value === '' || value === null ? NaN : +value;
+  }
+
+  barWidth(): number {
+    const r = this.result();
+    return r ? Math.min(100, Math.max(6, r.risk * 100 * 7)) : 0;
+  }
+  maxWeight(): number {
+    const r = this.result();
+    return r ? Math.max(...r.drivers.map((d) => d.weight), 1) : 1;
+  }
 
   save(): void {
+    if (!this.isValid()) return;
     const f = this.form();
     this.saving.set(true);
     this.api.predict({
       patient_ref: f.patientRef || undefined,
       age: f.age, parity: f.parity, interval_months: f.intervalMonths,
       previous_stillbirth: f.previousStillbirth, previous_loss: f.previousLoss,
-      multiple: f.multiple, told_high_bp: f.toldHighBp, anc_visits: f.ancVisits,
+      multiple: f.multiple, anc_visits: f.ancVisits,
     }).subscribe({
       next: () => { this.saving.set(false); this.saved.set(true); },
       error: () => { this.saving.set(false); },
@@ -73,7 +109,6 @@ export class ClinicianDashboardComponent {
     const add = (c: boolean, w: number, l: string) => { if (c) { z += w; drivers.push({ label: l, weight: w }); } };
     add(f.multiple, 1.4, 'Multiple pregnancy');
     add(f.previousStillbirth, 1.0, 'Previous stillbirth');
-    add(f.toldHighBp, 0.9, 'Told high blood pressure');
     add(f.previousLoss, 0.5, 'Previous pregnancy loss');
     add(f.age < 18, 0.4, 'Age under 18');
     add(f.age >= 35, 0.5, 'Age 35 or older');

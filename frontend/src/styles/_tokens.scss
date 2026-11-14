@@ -1,28 +1,28 @@
-// Design tokens — the soft, warm clinical palette.
+// Design tokens — soft lavender "baby care" palette.
 // Import once in styles.scss:  @use 'styles/tokens' as *;
 
 :root {
-  // surfaces
-  --page-bg: #efe4d6;
-  --surface-1: #f6ede1;
+  // surfaces (pale lavender wash)
+  --page-bg: #f4ecfb;
+  --surface-1: #efe3fb;
   --surface-2: #ffffff;
-  --border: #e4d7c6;
-  --border-strong: #d8c7b2;
+  --border: #e4d3f4;
+  --border-strong: #d2bce8;
 
-  // text
-  --text-primary: #2b2621;
-  --text-secondary: #6f655a;
-  --text-muted: #a2968754;
+  // text (deep plum-grey, readable on lavender)
+  --text-primary: #2e2740;
+  --text-secondary: #6b6080;
+  --text-muted: #a596b7;
 
-  // accent (clay)
-  --accent: #d87a53;
-  --accent-soft: #f4e3d8;
+  // accent (soft rose — a baby-care pairing with lavender)
+  --accent: #c87ca4;
+  --accent-soft: #f4e5ee;
   --on-accent: #ffffff;
 
   // risk roles
-  --success: #3b7d4f;      --bg-success: #e7f1e6;   --border-success: #cfe3cd;
-  --warning: #b9771a;      --bg-warning: #f8ecd6;   --border-warning: #ecd9b8;
-  --danger:  #b5452f;      --bg-danger:  #f6e2db;   --border-danger:  #ecccc0;
+  --success: #3b7d4f;      --bg-success: #e7f3ec;   --border-success: #cfe6d6;
+  --warning: #b9771a;      --bg-warning: #f7ecd9;   --border-warning: #ecd9b8;
+  --danger:  #c0452f;      --bg-danger:  #f7e0dd;   --border-danger:  #eecabf;
 
   // shape
   --radius: 10px;
