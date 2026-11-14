@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   LoginBody,
+  MetricsRow,
   PredictRequest,
   PredictResponse,
   RegisterBody,
@@ -30,5 +31,9 @@ export class ApiService {
 
   history(): Observable<PredictResponse[]> {
     return this.http.get<PredictResponse[]>(`${API_BASE}/history`);
+  }
+
+  metrics(): Observable<MetricsRow[]> {
+    return this.http.get<MetricsRow[]>(`${API_BASE}/metrics`);
   }
 }
