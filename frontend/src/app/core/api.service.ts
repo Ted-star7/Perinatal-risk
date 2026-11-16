@@ -21,8 +21,13 @@ export interface ModelRelease {
   algorithm?: string;
   model_id?: string;
   created_at?: string;
+  features?: string[];
   evaluation?: {
-    test: { mean_score: number; event_rate: number; brier_score: number };
+    selection?: string;
+    test: {
+      mean_score: number; event_rate: number; brier_score: number;
+      pr_auc?: number; roc_auc?: number; rows?: number; events?: number;
+    };
     country_metrics?: Record<string, { unweighted: { roc_auc: number; pr_auc: number } }>;
   };
 }

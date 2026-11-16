@@ -10,8 +10,48 @@
     </button>
   </header>
   <p class="research-note">Results come from historical survey records. Testing in clinical care and agreeing on care thresholds are still pending.</p>
+  <nav class="source-switch" aria-label="Evaluation result source">
+    <button type="button" [attr.aria-pressed]="view() === 'submissions'" (click)="view.set('submissions')">Notebook submissions</button>
+    <button type="button" [attr.aria-pressed]="view() === 'releases'" (click)="view.set('releases')">API model releases</button>
+  </nav>
   @if (loading()) {
     <p role="status">Loading model results…</p>
+  } @else if (view() === 'releases') {
+    <section class="source-heading">
+      <h2>Models loaded by the assessment API</h2>
+      <p>These figures belong to the exact model files reported by the API. Their feature definitions and training runs can differ from notebook submissions.</p>
+    </section>
+    @if (releaseError()) {
+      <div class="error" role="alert"><p>{{ releaseError() }}</p><button type="button" (click)="loadMetrics()">Try again</button></div>
+    } @else {
+      @for (model of orderedReleases(); track model.cohort) {
+        <section class="cohort release-report">
+          <div class="cohort-title"><h2>{{ cohortLabel(model.cohort) }}</h2><span>{{ !model.available ? 'Unavailable' : model.serving ? 'Used for clinician assessments' : 'Research comparison only' }}</span></div>
+          @if (model.available && model.evaluation; as evaluation) {
+            <h3>{{ algorithmLabel(model.algorithm ?? '') }}</h3>
+            <p class="ranking-note">All figures in this card come from this release’s own evaluation report.</p>
+            <div class="calibration release-scores">
+              <div><span>Finding affected cases (PR-AUC)</span><strong class="release-pr">{{ evaluation.test.pr_auc == null ? 'Not reported' : (evaluation.test.pr_auc | number:'1.3-3') }}</strong></div>
+              <div><span>Distinguishing outcomes (ROC-AUC)</span><strong>{{ evaluation.test.roc_auc == null ? 'Not reported' : (evaluation.test.roc_auc | number:'1.3-3') }}</strong></div>
+              <div><span>Size of prediction errors (Brier score)</span><strong>{{ evaluation.test.brier_score | number:'1.4-4' }}</strong></div>
+              <div><span>Average risk estimated (mean prediction)</span><strong>{{ evaluation.test.mean_score | percent:'1.2-2' }}</strong></div>
+              <div><span>Cases actually affected (observed rate)</span><strong>{{ evaluation.test.event_rate | percent:'1.2-2' }}</strong></div>
+            </div>
+            @if (evaluation.selection) { <p class="selection-reason"><strong>Recorded selection method:</strong> {{ evaluation.selection }}</p> }
+            <details>
+              <summary>Model version, inputs and results by country</summary>
+              <p>Model prepared {{ model.created_at | date:'medium' }}</p>
+              <p class="hash">Model identifier {{ model.model_id }}</p>
+              @if (model.prediction_context) { <p>Input definition: {{ model.prediction_context }}</p> }
+              @if (model.features?.length) { <p class="hash">Recorded predictors: {{ model.features.join(', ') }}</p> }
+              @for (entry of evaluation.country_metrics | keyvalue; track entry.key) {
+                <p>{{ entry.key }} · Finding affected cases (PR-AUC) {{ entry.value.unweighted.pr_auc | number:'1.3-3' }} · Distinguishing outcomes (ROC-AUC) {{ entry.value.unweighted.roc_auc | number:'1.3-3' }}</p>
+              }
+            </details>
+          } @else { <p class="error">The model for this outcome is currently unavailable.</p> }
+        </section>
+      } @empty { <p role="status">No API model release information is available yet.</p> }
+    }
   } @else if (error()) {
     <div class="error" role="alert">
       <p>{{ error() }}</p>
@@ -20,6 +60,11 @@
   } @else if (metrics().length === 0) {
     <p role="status">No model results are available yet.</p>
   } @else {
+    <section class="source-heading">
+      <h2>Results submitted from the modeling notebooks</h2>
+      <p>These are the values saved in the shared metrics database. Each cohort is ranked by its submitted test PR-AUC.</p>
+      <p>Submissions do not identify an exact model file or experiment version. A matching algorithm name does not establish that the API uses the evaluated model. Open API model releases to check the loaded files.</p>
+    </section>
     @for (group of cohortGroups(); track group.cohort) {
       <section class="cohort">
         <div class="cohort-title">
@@ -36,7 +81,7 @@
             </article>
           }
         </div>
-        <p class="ranking-note">Ranked by the test score for finding affected cases. The model currently in use was selected using training cross-validation.</p>
+        <p class="ranking-note">Ranked by submitted test PR-AUC. Highest test score describes this comparison; it does not designate a final or deployed model.</p>
         <div class="table-scroll" tabindex="0" [attr.aria-label]="cohortLabel(group.cohort) + ' comparison table'">
           <table>
             <thead>
@@ -51,11 +96,10 @@
             </thead>
             <tbody>
               @for (row of group.models; track row.algorithm; let rank = $index) {
-                <tr [class.selected]="release(group.cohort)?.serving && release(group.cohort)?.algorithm === row.algorithm">
+                <tr>
                   <td>{{ rank + 1 }}</td>
                   <th scope="row">
                     {{ algorithmLabel(row.algorithm) }}
-                    @if (release(group.cohort)?.serving && release(group.cohort)?.algorithm === row.algorithm) { <small>Model currently in use</small> }
                     <span class="row-note">{{ row.testEvents | number }} affected cases used for testing</span>
                     <span class="row-note">Last updated {{ row.updatedAt | date:'medium' }}</span>
                   </th>
@@ -70,28 +114,6 @@
             </tbody>
           </table>
         </div>
-        @if (release(group.cohort); as model) {
-          @if (model.available && model.evaluation; as evaluation) {
-            <div class="calibration">
-              <div><span>Average risk estimated (mean prediction)</span><strong>{{ evaluation.test.mean_score | percent:'1.2-2' }}</strong></div>
-              <div><span>Cases actually affected (observed rate)</span><strong>{{ evaluation.test.event_rate | percent:'1.2-2' }}</strong></div>
-              <div><span>Size of prediction errors (Brier score)</span><strong>{{ evaluation.test.brier_score | number:'1.4-4' }}</strong></div>
-            </div>
-            <details>
-              <summary>Model version and results by country</summary>
-              @if (!model.serving) { <p>This cohort is used for research comparison.</p> }
-              <p>Model prepared {{ model.created_at | date:'medium' }}</p>
-              <p class="hash">Model identifier {{ model.model_id }}</p>
-              @for (entry of evaluation.country_metrics | keyvalue; track entry.key) {
-                <p>{{ entry.key }} · Finding affected cases (PR-AUC) {{ entry.value.unweighted.pr_auc | number:'1.3-3' }} · Distinguishing outcomes (ROC-AUC) {{ entry.value.unweighted.roc_auc | number:'1.3-3' }}</p>
-              }
-            </details>
-          } @else {
-            <p class="error">The model for this outcome is currently unavailable.</p>
-          }
-        } @else {
-          <p class="status">The model currently in use could not be checked.</p>
-        }
       </section>
     }
   }
@@ -109,16 +131,16 @@
       </div>
       <div>
         <h3>Affected cases found (recall)</h3>
-        <p>Each approach flags the same number of pregnancies as the checklist. This percentage shows how many affected cases were found among those flagged.</p>
+        <p>Shows the proportion of affected cases found under the evaluation’s flagging rule. Compare recall only when models use the same records and review capacity. The submitted rows do not store the flag count or rule version.</p>
         <p>For example, 60% means 60 out of every 100 affected cases in the test records were found.</p>
       </div>
       <div>
         <h3>Compared with the checklist</h3>
-        <p>Shows whether the model found more affected cases than the pregnancy-history checklist, with both flagging the same number of pregnancies for review. The checklist uses age when pregnancy began, previous live births, multiple pregnancy and previous stillbirth.</p>
+        <p>Reports the comparison submitted by the notebook. Check the source notebook for its checklist definition and flagging rule. The historical and ongoing-pregnancy experiments use different input definitions.</p>
       </div>
       <div>
-        <h3>Model currently in use</h3>
-        <p>Highlights the model file that the API currently uses to calculate assessments. Selection uses repeated checks on training data (cross-validation), followed by evaluation on separate test records.</p>
+        <h3>API model releases</h3>
+        <p>Shows the model files loaded by the API with their own evaluation reports and recorded selection method. This view is separate from the submitted notebook rankings.</p>
       </div>
       <div>
         <h3>Size of prediction errors (Brier score)</h3>

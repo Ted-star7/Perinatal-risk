@@ -34,7 +34,12 @@ export interface CohortPerformanceGroup {
 export class EvalDashboardComponent implements OnInit {
   readonly metrics = signal<ModelMetrics[]>([]);
   readonly releases = signal<ModelRelease[]>([]);
-  readonly cohorts = ['lbw', 'perinatal', 'perinatal_anc'];
+  readonly view = signal<'submissions' | 'releases'>('submissions');
+  readonly releaseError = signal('');
+  readonly cohorts = ['perinatal', 'lbw', 'perinatal_anc'];
+  readonly orderedReleases = computed(() =>
+    this.cohorts.flatMap((cohort) => this.releases().filter((model) => model.cohort === cohort)),
+  );
   readonly cohortGroups = computed<CohortPerformanceGroup[]>(() =>
     this.cohorts.map((cohort) => {
       const models = this.rows(cohort);
@@ -54,10 +59,17 @@ export class EvalDashboardComponent implements OnInit {
   loadMetrics(): void {
     this.loading.set(true);
     this.error.set('');
+    this.releaseError.set('');
 
     forkJoin({
-      records: this.api.metrics(),
-      releases: this.api.releases().pipe(catchError(() => of([]))),
+      records: this.api.metrics().pipe(catchError(() => {
+        this.error.set('Unable to load submitted model results. Please try again.');
+        return of([]);
+      })),
+      releases: this.api.releases().pipe(catchError(() => {
+        this.releaseError.set('Unable to check the API model releases. Please try again.');
+        return of([]);
+      })),
     }).subscribe({
       next: ({ records, releases }) => {
         this.releases.set(releases);
@@ -76,17 +88,7 @@ export class EvalDashboardComponent implements OnInit {
         this.metrics.set(mappedRecords);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set(
-          'Unable to load model performance results. Please try again.'
-        );
-        this.loading.set(false);
-      },
     });
-  }
-
-  release(cohort: string): ModelRelease | undefined {
-    return this.releases().find((row) => row.cohort === cohort);
   }
 
   rows(cohort: string): ModelMetrics[] {
@@ -96,9 +98,9 @@ export class EvalDashboardComponent implements OnInit {
 
   cohortLabel(cohort: string): string {
     const labels: Record<string, string> = {
-      lbw: 'Babies born weighing less than 2.5 kg (low birth weight)',
-      perinatal: 'Risk of death around birth (perinatal death)',
-      perinatal_anc: 'Risk around birth in the pregnancy check-up cohort (ANC research)',
+      perinatal: 'Primary outcome: risk of death around birth (perinatal death)',
+      lbw: 'Secondary outcome: babies born weighing less than 2.5 kg (low birth weight)',
+      perinatal_anc: 'Perinatal ANC: pregnancy check-up cohort (research comparison)',
     };
     return labels[cohort] ?? cohort;
   }

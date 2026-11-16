@@ -106,6 +106,13 @@ account. The database persists between runs. Open `/performance` directly after 
 and the actual serving releases. Its navigation link is hidden during clinician
 testing. Signed-in testers can still open this route, as requested. `--publish-local` updates only http://localhost:8000/metrics.
 
+The evaluation page has two source views, both ordered perinatal (primary), LBW
+(secondary), then ANC research. **Notebook submissions** ranks the saved `/metrics`
+rows by test PR-AUC. **API model releases** shows the loaded model files and each
+file's own scores, calibration results, predictors and recorded selection method.
+An algorithm name alone does not link a submitted metric row to a particular
+release, so the notebook table does not mark a row as the serving model.
+
 The antenatal trainer compares logistic regression, random forest and gradient
 boosting for each cohort using five grouped training folds. It selects by mean
 training average precision, then fits grouped sigmoid calibration and evaluates
