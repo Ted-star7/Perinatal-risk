@@ -78,6 +78,28 @@ View everything in TablePlus: connect to `127.0.0.1:5432`, user/pass `app`/`app`
 database `perinatal_app`, schema **public** — you'll see the clinics, doctors,
 predictions, and the `combined_*` cohort tables all in one place.
 
+## Local frontend startup
+
+After pulling dependency or builder changes, stop the frontend with `Ctrl+C`,
+run `npm ci` inside `frontend/`, then restart with `npm start` or `ng serve`.
+The project uses `@angular/build` for development, production builds and tests.
+`Application bundle generation complete` followed by `Watch mode enabled`
+means the development server started successfully.
+
+Local assessments use the joblib releases installed in the API Docker image.
+Keep the API running and check `http://localhost:8000/ready`. The evaluation
+page's **API model releases** view shows these files and their own reports.
+**Notebook submissions** reads the local database by default, so its saved
+metrics can differ from the hosted database. To populate it from the packaged
+antenatal evaluation reports, run this from the repository root:
+
+```bash
+docker compose exec api python -m ml.src.train_antenatal_models --publish-local
+```
+
+This publishes the nine packaged evaluation rows locally. It does not retrain
+the models or update the hosted database.
+
 ## Trained models and clinician results
 
 The assessment now calls `POST /assess` to calculate a result and `POST /predict`
