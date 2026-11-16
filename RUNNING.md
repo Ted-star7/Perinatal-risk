@@ -41,7 +41,7 @@ This starts:
 On startup the API **auto-loads** the combined cohort tables (`combined_*`) into
 the database, as long as the CSVs are in `data\processed\`. No manual seed step.
 
-Leave this terminal running. Check the API: open http://localhost:8000/ready. It checks the database and all three model releases.
+Leave this terminal running. Check the API: open http://localhost:8000/ready. It checks the database and the two serving models: perinatal and low birth weight.
 `/health` checks whether the API process is alive.
 
 ## 3. Start the frontend (second terminal)
@@ -85,9 +85,11 @@ to save it. Results include the perinatal score, secondary low birth weight
 score, and the project's checklist baseline. Saved records include both scores,
 model hashes and checklist findings. Earlier records remain readable.
 
-Use Python 3.12 or 3.13 and install `ml/requirements.txt` in your virtual
-environment. After merging modeling changes, refresh all nine notebook recipes
-from the repository root, then start the local services and publish their metrics.
+A fresh checkout includes the packaged model release; training is optional for
+running assessments. To retrain, use Python 3.12 or 3.13 and install
+`ml/requirements.txt` in your virtual environment. Run the antenatal trainer from
+the repository root, validate and package its outputs, then rebuild the API and
+publish the evaluation metrics.
 
 ```bash
 python -m ml.src.train_antenatal_models
@@ -122,17 +124,18 @@ commands reproduce the historical research recipes under `ml/models/<cohort>/`.
 These historical releases have a different input definition. The clinician API
 checks the antenatal prediction context before loading a serving release.
 
-Running the exporter without `--refresh` reproduces the algorithm selected in
-the existing shared `/metrics` store. This mode honors a single `is_best` flag,
+For the historical `ml.src.select_models` exporter, running without `--refresh`
+reproduces the algorithm selected in the existing shared `/metrics` store. This mode honors a single `is_best` flag,
 or the highest recorded PR-AUC when no winner is marked. `METRICS_API_URL` sets
 that source API. For an intentional shared dashboard view, set
 `METRICS_SOURCE_URL=https://perinatal-api.onrender.com/metrics` before starting
 Docker. The default local dashboard uses its own database.
 
-The selected exports require scikit-learn 1.9.1, matching the existing artifact's
-training version. The API rejects incompatible model versions and invalid
-outputs. Model files stay git-ignored. Keep each release's joblib files together
-with their JSON reports.
+The selected exports require scikit-learn 1.9.1, matching their training version.
+The API rejects incompatible model versions and invalid outputs. Local training
+exports under `ml/models/` stay git-ignored; the verified compressed release under
+`backend/models/` is committed. Keep each release's joblib files together with
+their JSON reports.
 
 The clinician assessment uses the general perinatal model as its primary result
 and the LBW model as its secondary result. The ANC cohort is retained for research

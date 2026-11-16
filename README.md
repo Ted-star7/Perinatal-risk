@@ -17,6 +17,9 @@ ml/
 │   └── modeling/              9 model notebooks (3 cohorts x 3 algorithms)
 └── src/
     ├── dataset.py             concatenate KE+TZ, clean, 80/20 split  (build_cohort)
+    ├── antenatal.py           current antenatal predictor definitions
+    ├── train_antenatal_models.py select, calibrate and evaluate models
+    ├── package_release.py     verify and package fitted releases
     └── export_combined.py     write the 3 combined cohorts to CSV
 
 contracts/                     shared definitions: cohort_config, feature_spec
@@ -39,8 +42,12 @@ KE + TZ cohorts ─► build_cohort() ─► combined + cleaned + 80/20 split
 - `build_cohort("perinatal")` returns the combined, cleaned data with a `split`
   column (`train`/`test`). Modeling reads from this (or from the DB — both shown
   in each notebook).
-- Each of the 9 modeling notebooks trains one algorithm and saves its metrics
-  with `db.metrics.save_metrics()`.
+- The 9 original modeling notebooks retain the historical research recipes.
+  The current clinician release is trained by `ml.src.train_antenatal_models`
+  using predictors available during pregnancy. See [RUNNING.md](RUNNING.md) for
+  the exact feature definitions, calibration and release workflow.
+- `db.metrics.save_metrics()` publishes evaluation results to the configured API,
+  which stores them in PostgreSQL. Set the destination publishing key first.
 
 ## Quick start
 
@@ -48,13 +55,13 @@ KE + TZ cohorts ─► build_cohort() ─► combined + cleaned + 80/20 split
 python3 -m venv .venv && .venv/bin/pip install -r ml/requirements.txt
 # data: drop the shared CSVs into data/processed/   (see data/README.md)
 
-# database and assessment API (export calibrated models first, see RUNNING.md):
+# database and assessment API (verified models are packaged in the repository):
 docker compose up -d --build
 .venv/bin/pip install -r db/requirements.txt
 # the API automatically seeds available combined cohort CSVs
 
 # frontend:
-cd frontend && npm install && npm start      # http://localhost:4200
+cd frontend && npm ci && npm start      # http://localhost:4200
 ```
 
 ## Working together
