@@ -1,59 +1,35 @@
-<section class="auth">
-  <aside class="auth__welcome">
-    <div class="auth__brand">
-      <span class="auth__logo"><i class="ti ti-heartbeat" aria-hidden="true"></i></span>
-      <span>Perinatal risk</span>
-    </div>
-    <img class="auth__image" src="mother-baby.png" alt="A mother holding her newborn" />
-    <div class="auth__copy">
-      <h1>Care that follows every mother</h1>
-      <p>Register your clinic to flag high-risk pregnancies early and keep a record
-        of every assessment your team makes.</p>
-    </div>
+<section class="auth-shell">
+  <aside class="auth-story">
+    <img src="registration-maternity.webp" alt="An expectant mother sitting comfortably" class="auth-photo" />
+    <a class="auth-brand" routerLink="/login"><span aria-hidden="true">+</span> Afya Nova</a>
+    <div class="story-copy"><p class="eyebrow">PREGNANCY & ANTENATAL CARE</p><h1>Care that stays<br />connected.</h1><p>One clinic. A shared record.<br />A clearer picture at every visit.</p></div>
+    <span class="story-foot">Perinatal research </span>
   </aside>
-
-  <form class="auth__form" (ngSubmit)="submit()">
-    <h2>Register your clinic</h2>
-    <p class="auth__hint">Set up once. Your team signs in after.</p>
-
-    <div class="group">
-      <span class="group__label">Clinic</span>
-      <label class="full">Clinic name
-        <input name="clinic_name" [(ngModel)]="form.clinic_name" required placeholder="Nakuru Family Clinic" />
-      </label>
-      <label>Type
-        <select name="type" [(ngModel)]="form.type">
-          <option *ngFor="let t of types">{{ t }}</option>
-        </select>
-      </label>
-      <label>County
-        <select name="county" [(ngModel)]="form.county">
-          <option *ngFor="let c of counties">{{ c }}</option>
-        </select>
-      </label>
-      <label class="full">Clinic phone
-        <input name="phone" [(ngModel)]="form.phone" placeholder="+254 7xx xxx xxx" />
-      </label>
-    </div>
-
-    <div class="group">
-      <span class="group__label">Your account (lead clinician)</span>
-      <label class="full">Full name
-        <input name="doctor_name" [(ngModel)]="form.doctor_name" required placeholder="Dr. Amina Yusuf" />
-      </label>
-      <label>Email
-        <input name="email" type="email" [(ngModel)]="form.email" required placeholder="amina@clinic.co.ke" />
-      </label>
-      <label>Password
-        <input name="password" type="password" [(ngModel)]="form.password" required placeholder="At least 6 characters" />
-      </label>
-    </div>
-
-    @if (error()) { <p class="auth__error">{{ error() }}</p> }
-
-    <button type="submit" class="auth__submit" [disabled]="busy()">
-      {{ busy() ? 'Creating…' : 'Register clinic' }}
-    </button>
-    <p class="auth__alt">Already registered? <a routerLink="/login">Sign in</a></p>
-  </form>
+  <div class="auth-content">
+    <div class="auth-top"><span>Clinician portal</span><a routerLink="/login">Already registered? Sign in ↗</a></div>
+    <form class="auth-form" #registerForm="ngForm" (ngSubmit)="submit()">
+      <p class="eyebrow">YOUR CLINIC, CONNECTED</p>
+      <h2>Create your clinic account.</h2>
+      <p class="auth-description">Set up your clinic, then invite colleagues to share its assessment records.</p>
+      <div class="form-grid">
+        <label class="wide">Clinic name<input name="clinic_name" [(ngModel)]="form.clinic_name" required maxlength="160" autocomplete="organization" placeholder="Clinic name" /></label>
+        <label><span class="field-label">Country <span class="optional">Optional</span></span><input name="country" [(ngModel)]="form.country" maxlength="80" autocomplete="country-name" placeholder="Country" /></label>
+        <label>County or region<input name="county" [(ngModel)]="form.county" maxlength="60" placeholder="Enter your location" /></label>
+        <label>Facility type<select name="type" [(ngModel)]="form.type">@for (type of types; track type) { <option>{{ type }}</option> }</select></label>
+        <label><span class="field-label">Phone <span class="optional">Optional</span></span><input name="phone" type="tel" [(ngModel)]="form.phone" maxlength="40" autocomplete="tel" placeholder="Clinic phone" /></label>
+        <label class="wide">Your full name<input name="doctor_name" [(ngModel)]="form.doctor_name" required maxlength="120" autocomplete="name" placeholder="Full name" /></label>
+        <label class="wide">Email address<input name="email" type="email" [(ngModel)]="form.email" required autocomplete="username" placeholder="you@clinic.org" /></label>
+        <div class="password-group wide">
+          <label for="register-password">Password</label>
+          <div class="password-field">
+            <input #registerPassword id="register-password" name="password" type="password" [(ngModel)]="form.password" required minlength="6" maxlength="128" autocomplete="new-password" placeholder="At least 6 characters" />
+            <app-password-toggle [control]="registerPassword" />
+          </div>
+        </div>
+      </div>
+      @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+      <button type="submit" class="primary-button" [disabled]="busy() || registerForm.invalid">{{ busy() ? 'Creating account…' : 'Create clinic account' }} <span aria-hidden="true">↗</span></button>
+    </form>
+    <footer class="auth-footer"><span>Afya Nova</span><p>Research-informed support for maternal care.</p></footer>
+  </div>
 </section>

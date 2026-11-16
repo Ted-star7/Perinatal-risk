@@ -1,34 +1,29 @@
-<section class="auth">
-  <aside class="auth__welcome">
-    <div class="auth__brand">
-      <span class="auth__logo"><i class="ti ti-heartbeat" aria-hidden="true"></i></span>
-      <span>Perinatal risk</span>
-    </div>
-    <img class="auth__image" src="maternal.png" alt="Illustration of a mother" />
-    <div class="auth__copy">
-      <h1>Welcome back</h1>
-      <p>Sign in to assess a pregnancy and see your clinic's history.</p>
-    </div>
+<section class="auth-shell">
+  <aside class="auth-story">
+    <img src="mother-baby.png" alt="A mother holding her newborn baby" class="auth-photo" fetchpriority="high" />
+    <a class="auth-brand" routerLink="/login"><span aria-hidden="true">+</span> Afya Nova</a>
+    <div class="story-copy"><p class="eyebrow">PREGNANCY & ANTENATAL CARE</p><h1>A clearer picture<br />of pregnancy risk.</h1><p>Thoughtful assessments.<br />Care that stays connected.</p></div>
+    <span class="story-foot">Perinatal research · Group 13</span>
   </aside>
-
-  <form class="auth__form" (ngSubmit)="submit()">
-    <h2>Sign in</h2>
-    <p class="auth__hint">Use the email you registered your clinic with.</p>
-
-    <div class="stack">
-      <label>Email
-        <input name="email" type="email" [(ngModel)]="email" required placeholder="amina@clinic.co.ke" />
-      </label>
-      <label>Password
-        <input name="password" type="password" [(ngModel)]="password" required placeholder="Your password" />
-      </label>
-    </div>
-
-    @if (error()) { <p class="auth__error">{{ error() }}</p> }
-
-    <button type="submit" class="auth__submit" [disabled]="busy()">
-      {{ busy() ? 'Signing in…' : 'Sign in' }}
-    </button>
-    <p class="auth__alt">New clinic? <a routerLink="/register">Register</a></p>
-  </form>
+  <div class="auth-content">
+    <div class="auth-top"><span>Clinician portal</span><span class="access-dot">Clinic access</span></div>
+    <form class="auth-form" #loginForm="ngForm" (ngSubmit)="submit()">
+      <p class="eyebrow">WELCOME BACK</p>
+      <h2>Good care starts here.</h2>
+      <p class="auth-description">Sign in to assess a pregnancy and access your clinic’s records.</p>
+      @if (route.snapshot.queryParamMap.has('expired')) { <p class="notice" role="status">Your session ended. Sign in to continue.</p> }
+      <label>Email address<input name="email" type="email" [(ngModel)]="email" required autocomplete="username" placeholder="you@clinic.org" /></label>
+      <div class="password-group">
+        <label for="login-password">Password</label>
+        <div class="password-field">
+          <input #loginPassword id="login-password" name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" placeholder="Enter your password" />
+          <app-password-toggle [control]="loginPassword" />
+        </div>
+      </div>
+      @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+      <button type="submit" class="primary-button" [disabled]="busy() || loginForm.invalid">{{ busy() ? 'Signing in…' : 'Sign in' }} <span aria-hidden="true">↗</span></button>
+      <p class="auth-alternative">Setting up a clinic? <a routerLink="/register">Create a clinic account</a></p>
+    </form>
+    <footer class="auth-footer"><span>Afya Nova</span><p>Research-informed support for maternal care.</p></footer>
+  </div>
 </section>

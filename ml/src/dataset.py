@@ -40,9 +40,7 @@ def load_cohort(name: str) -> pd.DataFrame:
     tz = pd.read_csv(PROCESSED / f"tz_{name}.csv")
 
     if list(ke.columns) != list(tz.columns):
-        raise ValueError(
-            f"{name}: Kenya and Tanzania columns differ, cannot concatenate"
-        )
+        raise ValueError(f"{name}: Kenya and Tanzania columns differ, cannot concatenate")
 
     combined = pd.concat([ke, tz], ignore_index=True)
     return combined
@@ -130,6 +128,13 @@ CONFIG = Path(__file__).resolve().parents[2] / "contracts" / "cohort_config.yaml
 def check_counts(df: pd.DataFrame, name: str) -> None:
     """Stop if any country's rows or events differ from contracts/cohort_config.yaml."""
     spec = yaml.safe_load(CONFIG.read_text())["cohorts"][name]
+    expected_countries = set(spec["n"])
+    actual_countries = set(df["country"].str.lower().dropna())
+    if actual_countries != expected_countries or df["country"].isna().any():
+        raise ValueError(
+            f"{name}: expected countries {sorted(expected_countries)}, "
+            f"got {sorted(actual_countries)}"
+        )
     for country, part in df.groupby("country"):
         key = country.lower()
         expected = (spec["n"][key], spec["expected_events"][key])
@@ -258,5 +263,7 @@ def build_cohort(name: str) -> pd.DataFrame:
 if __name__ == "__main__":
     for c in COHORTS:
         df = load_cohort(c)
-        print(f"{c:16s} -> {df.shape[0]:,} rows, {df.shape[1]} cols "
-              f"(countries: {sorted(df['country'].unique())})")
+        print(
+            f"{c:16s} -> {df.shape[0]:,} rows, {df.shape[1]} cols "
+            f"(countries: {sorted(df['country'].unique())})"
+        )

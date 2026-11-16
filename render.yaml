@@ -18,9 +18,13 @@ services:
     runtime: docker
     plan: free
     dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    healthCheckPath: /health
+    dockerContext: .
+    healthCheckPath: /ready
     envVars:
+      - key: APP_ENV
+        value: production
+      - key: METRICS_KEY
+        generateValue: true
       - key: APP_DB_URL
         fromDatabase:
           name: perinatal-db

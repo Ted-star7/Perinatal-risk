@@ -5,21 +5,31 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
       POSTGRES_DB: perinatal_app
-    ports: ["5432:5432"]
+    ports: ["127.0.0.1:5432:5432"]
     volumes:
       - app_db_data:/var/lib/postgresql/data
       - ./db/app:/docker-entrypoint-initdb.d
 
   api:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       APP_DB_URL: postgresql+psycopg://app:app@app_db:5432/perinatal_app
+      JWT_SECRET: ${JWT_SECRET:-}
+      METRICS_KEY: ${METRICS_KEY:-}
+      APP_ENV: development
       FRONTEND_ORIGIN: http://localhost:4200
-      METRICS_SOURCE_URL: https://perinatal-api.onrender.com/metrics #added
-    ports: ["8000:8000"]
+      METRICS_SOURCE_URL: ${METRICS_SOURCE_URL:-}
+      PERINATAL_MODEL_URL: ${PERINATAL_MODEL_URL:-}
+      PERINATAL_MODEL_SHA256: ${PERINATAL_MODEL_SHA256:-}
+      ANC_MODEL_URL: ${ANC_MODEL_URL:-}
+      ANC_MODEL_SHA256: ${ANC_MODEL_SHA256:-}
+      LBW_MODEL_URL: ${LBW_MODEL_URL:-}
+      LBW_MODEL_SHA256: ${LBW_MODEL_SHA256:-}
+    ports: ["127.0.0.1:8000:8000"]
     volumes:
-      # mounted read-only so the backend can build + seed the cohorts on startup
-      - ./ml:/code/ml:ro
+      # Optional local research data and cohort definitions for startup seeding.
       - ./contracts:/code/contracts:ro
       - ./data:/code/data:ro
     depends_on: [app_db]

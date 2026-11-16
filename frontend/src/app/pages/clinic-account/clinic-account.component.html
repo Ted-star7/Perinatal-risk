@@ -1,0 +1,30 @@
+<section class="account-page">
+  <a routerLink="/triage" class="back">← Back to assessment</a>
+  <p class="eyebrow">AFYA NOVA · CLINIC ACCESS</p>
+  <h1>{{ mode === 'team' ? 'Your clinic team.' : mode === 'password' ? 'Change your password.' : 'Join your clinic.' }}</h1>
+  <p>{{ mode === 'team' ? 'Invite a colleague to share assessment records at your clinic.' : mode === 'password' ? 'Changing your password will end your existing sessions. Sign in again afterwards.' : 'Create your clinician account using the invitation from your clinic owner.' }}</p>
+  <form #accountForm="ngForm" (ngSubmit)="submit()">
+    @if (mode === 'team') { <label>Colleague’s email<input type="email" name="email" [(ngModel)]="email" required placeholder="colleague@clinic.org" /></label> }
+    @if (mode === 'join') { <label>Your full name<input name="name" [(ngModel)]="name" required maxlength="120" autocomplete="name" /></label> }
+    @if (mode === 'password') { <div class="password-group">
+      <label for="currentPassword">Current password</label>
+      <div class="password-field">
+        <input #currentPasswordInput id="currentPassword" type="password" name="currentPassword" [(ngModel)]="currentPassword" required autocomplete="current-password" />
+        <app-password-toggle [control]="currentPasswordInput" />
+      </div>
+    </div> }
+    @if (mode !== 'team') { <div class="password-group">
+      <label for="newPassword">{{ mode === 'join' ? 'Password' : 'New password' }}</label>
+      <div class="password-field">
+        <input #newPasswordInput id="newPassword" type="password" name="newPassword" [(ngModel)]="newPassword" required autocomplete="new-password" minlength="6" maxlength="128" placeholder="At least 6 characters" />
+        <app-password-toggle [control]="newPasswordInput" />
+      </div>
+    </div> }
+    @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+    <button class="primary-button" type="submit" [disabled]="busy() || accountForm.invalid">{{ busy() ? 'Please wait…' : mode === 'team' ? 'Create invitation link ↗' : mode === 'password' ? 'Update password ↗' : 'Join clinic ↗' }}</button>
+  </form>
+  @if (link()) { <div class="invitation"><h2>Invitation ready</h2><p>Share this link with the colleague you invited. It expires after 48 hours.</p><input [value]="link()" readonly aria-label="Invitation link" (focus)="$any($event.target).select()" /><small>Select the link to copy it.</small></div> }
+  @if (mode === 'team') {
+    <section class="team"><h2>Clinic members</h2>@for (colleague of colleagues(); track colleague.id) { <div class="member"><span>{{ colleague.name }}<small>{{ colleague.email }}</small></span><span class="member-status">{{ colleague.is_active ? colleague.is_owner ? 'Clinic owner' : 'Clinician' : 'Inactive' }}</span>@if (colleague.id !== auth.session()?.doctor_id && colleague.is_active) { <button type="button" (click)="deactivate(colleague)">Deactivate</button> }</div> }</section>
+  }
+</section>

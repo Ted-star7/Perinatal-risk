@@ -1,11 +1,11 @@
-# Perinatal risk
+# Afya Nova
 
 Predicting perinatal death and low birth weight in Kenya and Tanzania from the
 2022 DHS surveys. Moringa DSF-PT15, Group 13.
 
 We pool the Kenya and Tanzania data, train models to rank which pregnancies are
 high-risk, and serve the result in two dashboards: a **clinician** view (enter
-pregnancy details → risk score, drivers, follow-up) and an **eval** view (model
+pregnancy details → research risk estimates, checklist and follow-up) and an **eval** view (model
 accuracy for the team and the presentation).
 
 ## Layout
@@ -48,10 +48,10 @@ KE + TZ cohorts ─► build_cohort() ─► combined + cleaned + 80/20 split
 python3 -m venv .venv && .venv/bin/pip install -r ml/requirements.txt
 # data: drop the shared CSVs into data/processed/   (see data/README.md)
 
-# optional database (only for the dashboards):
-docker compose up -d app_db clean_db
+# database and assessment API (export calibrated models first, see RUNNING.md):
+docker compose up -d --build
 .venv/bin/pip install -r db/requirements.txt
-python db/seed_combined.py        # loads the 3 combined cohorts
+# the API automatically seeds available combined cohort CSVs
 
 # frontend:
 cd frontend && npm install && npm start      # http://localhost:4200

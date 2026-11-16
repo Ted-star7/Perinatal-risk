@@ -20,6 +20,12 @@ features:
     label: Mother's age at the pregnancy (years)
     type: int
 
+  maternal_age_at_start:
+    label: Mother’s age when the current pregnancy began
+    type: int
+    derived_from: floor((p3 - p20 - v011) / 12)
+    note: antenatal_history_v1 models use this age definition
+
   prior_pregnancies:
     label: Number of previous pregnancies
     type: int
@@ -37,9 +43,10 @@ features:
     type: bool          # 0 / 1
 
   preceding_interval_m:
-    label: Preceding birth interval (months)
+    label: Preceding pregnancy interval (months)
     type: float
     nullable: true      # blank for a first pregnancy
+    note: sourced from DHS p11 in the supplied CSVs; interval between pregnancy outcomes, unknown for an ongoing pregnancy
 
   multiple:
     label: Multiple pregnancy (twins or more)

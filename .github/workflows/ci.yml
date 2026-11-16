@@ -1,20 +1,52 @@
 name: CI
-
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
-
-# Lint the Python we actually have. Backend/frontend checks come back when
-# those stages are built out.
 jobs:
-  lint:
+  backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: perinatal_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ci -d perinatal_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: pip install ruff
+          python-version: '3.12'
+      - run: pip install -r backend/requirements.txt ruff httpx pip-audit
       - run: ruff check .
+      - run: python -m ml.src.package_release --install backend/models/antenatal-release.tar.gz
+      - run: python -m unittest discover -s backend/tests -v
+        env:
+          PYTHONPATH: backend:.
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+          TEST_POSTGRES_URL: postgresql+psycopg://ci:ci@localhost:5432/perinatal_ci
+      - run: pip-audit -r backend/requirements.txt
+      - run: docker build -f backend/Dockerfile .
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.18.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test -- --watch=false --browsers=ChromeHeadless
+      - run: npm run build
+      - run: npm audit --audit-level=high

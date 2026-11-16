@@ -1,22 +1,25 @@
 @if (auth.isLoggedIn()) {
-  <nav class="tabs">
-    <a routerLink="/triage" routerLinkActive="tabs__link--active" class="tabs__link">
-      <i class="ti ti-stethoscope" aria-hidden="true"></i> Triage
+  <header class="app-header">
+    <a class="brand" routerLink="/triage" aria-label="Afya Nova assessment home">
+      <span class="brand-mark" aria-hidden="true">+</span>
+      <span class="brand-name">Afya Nova<span>MATERNAL CARE</span></span>
     </a>
-    <a routerLink="/history" routerLinkActive="tabs__link--active" class="tabs__link">
-      <i class="ti ti-list-details" aria-hidden="true"></i> History
-    </a>
-    <a routerLink="/performance" routerLinkActive="tabs__link--active" class="tabs__link">
-      <i class="ti ti-chart-dots" aria-hidden="true"></i> Model performance
-    </a>
-    <span class="tabs__spacer"></span>
-    <span class="tabs__clinic">{{ auth.session()?.clinic_name }}</span>
-    <button class="tabs__logout" (click)="auth.logout()">
-      <i class="ti ti-logout" aria-hidden="true"></i> Sign out
-    </button>
-  </nav>
+    <nav class="navigation" aria-label="Clinic navigation">
+      <a routerLink="/triage" routerLinkActive="active"><i class="ti ti-stethoscope" aria-hidden="true"></i> Assessment</a>
+      <a routerLink="/history" routerLinkActive="active"><i class="ti ti-notebook" aria-hidden="true"></i> Clinic records</a>
+    </nav>
+    <div class="account">
+      <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+      <span class="account-copy">{{ auth.session()?.doctor_name }}<small>{{ auth.session()?.clinic_name }}</small></span>
+      <details class="account-menu">
+        <summary aria-label="Account menu"><i class="ti ti-chevron-down" aria-hidden="true"></i></summary>
+        <div class="menu-panel">
+          @if (auth.session()?.is_owner) { <a routerLink="/clinic">Clinic team</a> }
+          <a routerLink="/account">Change password</a>
+          <button (click)="auth.logout()">Sign out</button>
+        </div>
+      </details>
+    </div>
+  </header>
 }
-
-<main class="page">
-  <router-outlet></router-outlet>
-</main>
+<main class="page" [class.public-page]="!auth.isLoggedIn()"><router-outlet></router-outlet></main>

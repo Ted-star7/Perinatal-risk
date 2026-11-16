@@ -1,29 +1,28 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { AppComponent } from './app.component';
+import { AuthService } from './core/auth.service';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: {
+          isLoggedIn: signal(true), session: signal({ clinic_name: 'Test clinic' }),
+        } },
+      ],
     }).compileComponents();
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it(`should have the 'perinatal-ui' title`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('perinatal-ui');
-  });
-
-  it('should render title', () => {
+  it('offers assessment and history navigation for a signed-in clinician', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, perinatal-ui');
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('nav a[href="/triage"]')?.textContent).toContain('Assessment');
+    expect(element.querySelector('a[href="/history"]')?.textContent).toContain('Clinic records');
+    expect(element.querySelector('a[href="/performance"]')).toBeNull();
   });
 });

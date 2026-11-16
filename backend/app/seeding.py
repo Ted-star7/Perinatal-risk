@@ -14,13 +14,11 @@ from sqlalchemy.engine import Engine
 
 def seed_cohorts(engine: Engine) -> None:
     try:
-        if inspect(engine).has_table("combined_perinatal"):
-            print("[seed] cohort tables already present — skipping")
-            return
-
         from ml.src.dataset import COHORTS, build_cohort
 
         for name in COHORTS:
+            if inspect(engine).has_table(f"combined_{name}"):
+                continue
             df = build_cohort(name)
             df.to_sql(f"combined_{name}", engine, if_exists="replace", index=False)
             print(f"[seed] combined_{name}: {len(df):,} rows")

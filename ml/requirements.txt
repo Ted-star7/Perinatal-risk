@@ -1,6 +1,6 @@
 pandas==2.2.3
 numpy==2.1.1
-scikit-learn==1.5.2
+scikit-learn==1.9.1
 shap==0.46.0
 matplotlib==3.9.2
 pyreadstat==1.2.7        # reads DHS .DTA / .SAV recode files

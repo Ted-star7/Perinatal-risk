@@ -1,0 +1,28 @@
+.account-page { max-width: 690px; margin: 15px auto; padding: 34px; border: 1px solid var(--border-strong); border-radius: 24px; background: var(--surface-2); }
+.back { display: inline-block; font-size: 12px; text-decoration: none; margin-bottom: 30px; }
+.eyebrow { font-size: 10px; letter-spacing: 1.8px; color: var(--text-secondary); }
+h1 { font-size: 31px; font-weight: 500; letter-spacing: -1px; margin: 12px 0; }
+p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+form { margin: 28px 0; }
+label { display: flex; flex-direction: column; gap: 9px; font-size: 13px; margin: 20px 0; }
+input { min-height: 47px; width: 100%; border: 1px solid var(--border-strong); background: var(--surface-1); border-radius: 10px; padding: 12px; font-size: 14px; }
+.primary-button { min-height: 47px; border: 0; border-radius: 11px; background: var(--accent); color: white; padding: 12px 18px; width: 100%; }
+h2 { font-size: 17px; font-weight: 550; }
+.invitation, .team { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+small { display: block; color: var(--text-secondary); font-size: 11px; margin-top: 7px; }
+.member { display: flex; gap: 15px; align-items: center; border-bottom: 1px solid var(--border); padding: 15px 0; font-size: 13px; }
+.member-status { font-size: 11px; color: var(--text-secondary); margin-left: auto; }
+.member button { border: 1px solid var(--border-danger); background: var(--bg-danger); color: var(--danger); padding: 10px; border-radius: 8px; font-size: 11px; }
+.error { color: var(--danger); }
+@media (max-width: 600px) { .account-page { padding: 24px 20px; } .member { flex-wrap: wrap; } }
+
+:host { display: block; min-width: 0; }
+.member > span { min-width: 0; overflow-wrap: anywhere; }
+input { font-size: 16px; min-width: 0; }
+.password-group { margin-top: 20px; }
+@media (max-width: 480px) {
+  .account-page { margin: 0; padding: 24px 16px; }
+  h1 { font-size: 27px; }
+  .member > span:first-child { flex-basis: 100%; }
+  .member-status { margin-left: 0; }
+}

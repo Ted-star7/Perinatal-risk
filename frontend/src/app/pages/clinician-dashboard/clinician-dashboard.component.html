@@ -1,116 +1,115 @@
-<section class="console">
-  <header class="topbar">
-    <div class="clinic">
-      <span class="clinic__logo"><i class="ti ti-heartbeat" aria-hidden="true"></i></span>
-      <span>
-        <span class="clinic__name">{{ clinicName() }}</span>
-        <span class="clinic__sub">Perinatal risk assessment</span>
-      </span>
-    </div>
-    <div class="doctor">{{ doctorName() }}</div>
+<section class="assessment-page">
+  <header class="page-heading">
+    <div><p class="eyebrow">PREGNANCY ASSESSMENT</p><h1>Pregnancy assessment</h1><p>Bring pregnancy history and antenatal care together in one assessment.</p></div>
   </header>
-
-  <div class="grid">
-    <form class="card form" (ngSubmit)="$event.preventDefault()">
-      <h2 class="form__title">New assessment</h2>
-      <p class="form__hint">Enter what's known during this pregnancy.
-        Fields marked <span class="req">*</span> are required.</p>
-
-      <label class="patient">Patient reference
-        <input [ngModel]="form().patientRef" name="ref" (ngModelChange)="update('patientRef', $event)"
-               placeholder="e.g. ANC-014" />
-      </label>
-
-      <fieldset class="group">
-        <legend><i class="ti ti-user" aria-hidden="true"></i> Mother</legend>
-        <label>Age in years <span class="req">*</span>
-          <input type="number" min="12" max="55" required
-                 [class.invalid]="errors()['age']"
-                 [ngModel]="form().age" name="age" (ngModelChange)="update('age', num($event))" />
-          @if (errors()['age']) { <small class="err">{{ errors()['age'] }}</small> }
-        </label>
-      </fieldset>
-
-      <fieldset class="group">
-        <legend><i class="ti ti-history" aria-hidden="true"></i> Pregnancy history</legend>
-        <label>Previous live births <span class="req">*</span>
-          <input type="number" min="0" max="16" required
-                 [class.invalid]="errors()['parity']"
-                 [ngModel]="form().parity" name="parity" (ngModelChange)="update('parity', num($event))" />
-          @if (errors()['parity']) { <small class="err">{{ errors()['parity'] }}</small> }
-        </label>
-        <label>Months since last birth <span class="req">*</span>
-          <input type="number" min="0" max="240" required
-                 [class.invalid]="errors()['intervalMonths']"
-                 [ngModel]="form().intervalMonths" name="interval" (ngModelChange)="update('intervalMonths', num($event))" />
-          @if (errors()['intervalMonths']) { <small class="err">{{ errors()['intervalMonths'] }}</small> }
-        </label>
-        <label>Previous stillbirth
-          <select [ngModel]="form().previousStillbirth" name="still" (ngModelChange)="update('previousStillbirth', $event)">
-            <option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
-          </select>
-        </label>
-        <label>Previous loss
-          <select [ngModel]="form().previousLoss" name="loss" (ngModelChange)="update('previousLoss', $event)">
-            <option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
-          </select>
-        </label>
-      </fieldset>
-
-      <fieldset class="group">
-        <legend><i class="ti ti-baby-carriage" aria-hidden="true"></i> This pregnancy</legend>
-        <label>Multiple pregnancy
-          <select [ngModel]="form().multiple" name="multiple" (ngModelChange)="update('multiple', $event)">
-            <option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
-          </select>
-        </label>
-        <label>ANC visits so far <span class="req">*</span>
-          <input type="number" min="0" max="20" required
-                 [class.invalid]="errors()['ancVisits']"
-                 [ngModel]="form().ancVisits" name="anc" (ngModelChange)="update('ancVisits', num($event))" />
-          @if (errors()['ancVisits']) { <small class="err">{{ errors()['ancVisits'] }}</small> }
-        </label>
-      </fieldset>
-    </form>
-
-    <aside class="result">
-      @if (result(); as r) {
-        <div class="card band" [class]="'band--' + r.role">
-          <span class="band__label">Estimated perinatal risk</span>
-          <div class="band__value">
-            <span class="band__pct">{{ r.risk | percent:'1.1-1' }}</span>
-            <span class="band__name">{{ r.band }}</span>
-          </div>
-          <div class="band__track"><span class="band__fill" [style.width.%]="barWidth()"></span></div>
-          <span class="band__baseline">vs 3.8% population baseline</span>
-        </div>
-
-        <div class="card">
-          <h3 class="card__title">Main drivers</h3>
-          <div class="drivers">
-            @for (d of r.drivers; track d.label) {
-              <div class="driver">
-                <span class="driver__label">{{ d.label }}</span>
-                <span class="driver__track"><span class="driver__fill" [class]="'driver__fill--' + r.role" [style.width.%]="d.weight / maxWeight() * 100"></span></span>
+  <div class="workspace">
+    <form class="assessment-form" (ngSubmit)="assess()" novalidate>
+      <div class="form-heading"><div><h2>Pregnancy details</h2><p>Required questions are marked <span aria-hidden="true">*</span>.</p></div><i class="ti ti-clipboard-heart" aria-hidden="true"></i></div>
+      <fieldset class="form-fields" [disabled]="busy()">
+        <section class="field-section">
+          <h3><i class="ti ti-user" aria-hidden="true"></i> About this pregnancy</h3>
+          <div class="field-grid">
+            <label>
+              <span>Mother’s age when this pregnancy began <span class="required">*</span></span>
+              <input name="age" type="number" required min="11" max="55" inputmode="numeric" [ngModel]="form().age" (ngModelChange)="update('age', $event)" placeholder="e.g. 29" [attr.aria-invalid]="submitted() && !!errors()['age']" aria-describedby="age-error" />
+              <small>Enter completed years at the start of this pregnancy.</small>
+              <small class="error" id="age-error">{{ submitted() ? errors()['age'] : '' }}</small>
+            </label>
+            <fieldset class="question wide">
+              <legend>Is this her first pregnancy? <span class="required">*</span></legend>
+              <div class="choices">
+                <label [class.chosen]="form().firstPregnancy === true"><input type="radio" name="firstPregnancy" [checked]="form().firstPregnancy === true" (change)="update('firstPregnancy', true)" />Yes</label>
+                <label [class.chosen]="form().firstPregnancy === false"><input type="radio" name="firstPregnancy" [checked]="form().firstPregnancy === false" (change)="update('firstPregnancy', false)" />No</label>
               </div>
-            } @empty { <p class="drivers__empty">No elevated-risk factors entered.</p> }
+              <small>Include pregnancies that ended in a loss.</small>
+              <small class="error">{{ submitted() ? errors()['firstPregnancy'] : '' }}</small>
+            </fieldset>
+            <fieldset class="question wide">
+              <legend>Is she expecting twins or more babies? <span class="required">*</span></legend>
+              <div class="choices">
+                <label [class.chosen]="form().multiple === false"><input type="radio" name="multiple" [checked]="form().multiple === false" (change)="update('multiple', false)" />No</label>
+                <label [class.chosen]="form().multiple === true"><input type="radio" name="multiple" [checked]="form().multiple === true" (change)="update('multiple', true)" />Yes</label>
+              </div>
+              <small class="error">{{ submitted() ? errors()['multiple'] : '' }}</small>
+            </fieldset>
           </div>
-        </div>
-
-        <div class="card">
-          <h3 class="card__title"><i class="ti ti-notes" aria-hidden="true"></i> Suggested follow-up</h3>
-          <p class="reco">{{ r.recommendation }}</p>
-          <button class="save" (click)="save()" [disabled]="saving() || !isValid()">
-            {{ saving() ? 'Saving…' : 'Save to clinic records' }}
-          </button>
-          @if (saved()) { <p class="saved"><i class="ti ti-check" aria-hidden="true"></i> Saved to {{ clinicName() }}</p> }
-          <p class="disclaimer">Research demonstration, not a diagnosis. Follow MOH guidelines and clinical judgement.</p>
-        </div>
-      } @else {
-        <div class="card band band--warning">
-          <span class="band__label">Complete the required fields</span>
-          <p class="reco">Enter valid numbers for all fields marked <span class="req">*</span> to see the risk estimate.</p>
-        </div>
+        </section>
+        @if (form().firstPregnancy === false) {
+          <section class="field-section">
+            <h3><i class="ti ti-history" aria-hidden="true"></i> Pregnancy history</h3>
+            <div class="field-grid">
+              <label>
+                <span>Previous live births <span class="required">*</span></span>
+                <input name="parity" type="number" required min="0" max="16" inputmode="numeric" [ngModel]="form().parity" (ngModelChange)="update('parity', $event)" placeholder="e.g. 1" />
+                <small class="error">{{ submitted() ? errors()['parity'] : '' }}</small>
+              </label>
+              <label>
+                <span>Previous stillbirth? <span class="required">*</span></span>
+                <select name="previousStillbirth" [ngModel]="form().previousStillbirth" (ngModelChange)="update('previousStillbirth', $event)">
+                  <option [ngValue]="null">Choose an answer</option><option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
+                </select>
+                <small class="error">{{ submitted() ? errors()['previousStillbirth'] : '' }}</small>
+              </label>
+              <label>
+                <span>Another previous pregnancy loss? <span class="required">*</span></span>
+                <select name="previousLoss" [ngModel]="form().previousLoss" (ngModelChange)="update('previousLoss', $event)">
+                  <option [ngValue]="null">Choose an answer</option><option [ngValue]="false">No</option><option [ngValue]="true">Yes</option>
+                </select>
+                <small>For example, a miscarriage.</small>
+                <small class="error">{{ submitted() ? errors()['previousLoss'] : '' }}</small>
+              </label>
+            </div>
+          </section>
+        }
+        <section class="field-section">
+          <h3><i class="ti ti-baby-carriage" aria-hidden="true"></i> Low birth weight</h3>
+          <div class="field-grid">
+            <label class="wide">
+              <span>Highest education level</span>
+              <select name="education" [ngModel]="form().education" (ngModelChange)="update('education', $event)" aria-describedby="education-help">
+                <option [ngValue]="null">Unknown</option><option value="No education">No formal education</option><option value="Primary">Primary school</option><option value="Secondary">Secondary school</option><option value="Higher">College or university</option>
+              </select>
+              <small id="education-help">Needed to calculate low birth weight, together with the pregnancy details above. If unknown, the risk around birth can still be calculated.</small>
+            </label>
+          </div>
+        </section>
+        <section class="field-section" aria-labelledby="record-heading">
+          <h3 id="record-heading"><i class="ti ti-notebook" aria-hidden="true"></i> Clinic record</h3>
+          <div class="field-grid">
+            <label class="wide">
+              <span>Patient reference <span class="optional">Optional</span></span>
+              <input name="patientRef" maxlength="60" [ngModel]="form().patientRef" (ngModelChange)="update('patientRef', $event)" placeholder="e.g. ANC-014" autocomplete="off" aria-describedby="patient-reference-help" />
+              <small id="patient-reference-help">Use the mother’s ANC card or clinic reference to find her saved assessment. This is used for recordkeeping.</small>
+            </label>
+          </div>
+        </section>
+      </fieldset>
+      <div class="form-actions">
+        <label class="draft-toggle"><input type="checkbox" [checked]="keepDraft()" (change)="toggleDraft($any($event.target).checked)" />Keep this draft in this tab</label>
+        <small class="draft-help">Optional. Cleared after saving or signing out.</small>
+        <button class="primary-button" type="submit" [disabled]="busy()">{{ calculating() ? 'Calculating assessment…' : 'Assess pregnancy' }} <span aria-hidden="true">↗</span></button>
+        <p class="connection-note"><i class="ti ti-cloud" aria-hidden="true"></i> A connection is needed to calculate and save.</p>
+      </div>
+    </form>
+    <aside class="results" aria-label="Assessment result" [attr.aria-busy]="busy()">
+      @if (error()) { <div class="error-card" role="alert">{{ error() }}</div> }
+      @if (calculating()) { <div class="result-card loading-card" role="status"><span class="loading-ring" aria-hidden="true"></span><h2>Building the assessment</h2><p>Checking the details against the research models.</p></div> }
+      @if (result(); as r) {
+        <section class="result-card estimates" aria-live="polite">
+          <div class="result-heading"><h2>Assessment results</h2><span class="estimate-label">Research estimates</span></div>
+          <div class="outcome primary-outcome"><span class="outcome-icon"><i class="ti ti-heartbeat" aria-hidden="true"></i></span><h3>Risk around birth</h3><p>{{ r.perinatal.description }}</p><div class="estimate-value">{{ r.perinatal.score | percent:'1.1-1' }}</div><span class="estimate-caption">Calibrated research estimate</span></div>
+          <div class="outcome secondary-outcome"><h3>Low birth weight <span>Secondary outcome</span></h3><p>{{ r.lbw.description }}</p>@if (r.lbw.status === 'available') { <div class="secondary-value">{{ r.lbw.score | percent:'1.1-1' }}<span>calibrated estimate</span></div> } @else { <p class="unavailable">{{ r.lbw.message }}</p> }</div>
+          <p class="research-note"><i class="ti ti-info-circle" aria-hidden="true"></i> Estimates come from survey research. Clinical validation is still pending.</p>
+        </section>
+        <section class="result-card checklist" [class.flagged]="r.baseline.flagged"><div class="result-heading"><h2>Checklist review</h2><span class="checklist-icon"><i class="ti" [class.ti-alert-circle]="r.baseline.flagged" [class.ti-clipboard-check]="!r.baseline.flagged" aria-hidden="true"></i></span></div><p class="checklist-summary">{{ r.baseline.summary }}</p>@if (r.baseline.factors.length) { <ul>@for (factor of r.baseline.factors; track factor) { <li>{{ factor }}</li> }</ul> }@for (unknown of r.baseline.unknown_factors; track unknown) { <p class="unknown-factor">{{ unknown }}</p> }</section>
+        <section class="result-card follow-up"><h2>Next steps</h2><p>{{ r.recommendation }}</p><details><summary>About this assessment <span aria-hidden="true">+</span></summary>@for (note of r.notes; track note) { <p>{{ note }}</p> }<h3>Information used for risk around birth</h3>
+          <ul>@for (input of r.perinatal.used_inputs; track input) { <li>{{ input }}</li> }</ul>
+          @if (r.lbw.status === 'available') {
+            <h3>Information used for low birth weight</h3>
+            <ul>@for (input of r.lbw.used_inputs; track input) { <li>{{ input }}</li> }</ul>
+          }</details><button class="primary-button" type="button" (click)="save()" [disabled]="busy() || saved()">{{ saving() ? 'Saving…' : saved() ? 'Saved to clinic records' : 'Save assessment' }} <i class="ti" [class.ti-check]="saved()" [class.ti-arrow-up-right]="!saved()" aria-hidden="true"></i></button>@if (saved()) { <p class="saved" role="status">Saved to {{ clinicName() }}.</p><button class="secondary-button" type="button" (click)="startAnother()">Start another assessment</button> }</section>
+      } @else if (!calculating()) {
+        <section class="empty-results"><div class="empty-image"><img src="mother-baby.png" alt="A mother holding her newborn baby" /></div><div class="empty-copy"><p class="eyebrow">A CLEARER PICTURE</p><h2>Ready when you are.</h2><p>Complete the details, then select <strong>Assess pregnancy</strong>.</p><ul><li><i class="ti ti-heartbeat" aria-hidden="true"></i> Risk around birth</li><li><i class="ti ti-baby-carriage" aria-hidden="true"></i> Low birth weight</li><li><i class="ti ti-clipboard-check" aria-hidden="true"></i> Pregnancy checklist</li></ul></div><p class="empty-foot">Use the assessment alongside clinical findings and local care guidelines.</p></section>
       }
     </aside>
   </div>

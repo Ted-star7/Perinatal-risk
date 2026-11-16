@@ -37,6 +37,12 @@ export const routes: Routes = [
         (m) => m.EvalDashboardComponent,
       ),
   },
+  { path: 'clinic', canActivate: [authGuard], data: { mode: 'team' },
+    loadComponent: () => import('./pages/clinic-account/clinic-account.component').then((m) => m.ClinicAccountComponent) },
+  { path: 'account', canActivate: [authGuard], data: { mode: 'password' },
+    loadComponent: () => import('./pages/clinic-account/clinic-account.component').then((m) => m.ClinicAccountComponent) },
+  { path: 'join', data: { mode: 'join' },
+    loadComponent: () => import('./pages/clinic-account/clinic-account.component').then((m) => m.ClinicAccountComponent) },
   { path: '', redirectTo: 'triage', pathMatch: 'full' },
   { path: '**', redirectTo: 'triage' },
 ];

@@ -22,14 +22,24 @@ Pick one cohort in your squad and work only in that file. Each notebook loads
 its own dataset from `data/processed/` and has a short overview of what to
 explore.
 
-## Modeling — later, shared
+## Modeling
 
 ```
 modeling/
   checklist_baseline.ipynb   the baseline every model must beat
-  models.ipynb               logreg / random forest / gradient boosting, grouped CV
-  validation_shap.ipynb      Kenya -> Tanzania, SHAP, calibration
+  perinatal_*.ipynb         3 approaches for the general perinatal cohort
+  anc_*.ipynb               3 approaches for the ANC research cohort
+  lbw_*.ipynb               3 approaches for the LBW cohort
+  validation_shap.ipynb      current antenatal calibration, country validation and permutation importance
 ```
 
 These come after EDA and are done by whoever leads modelling, on the headline
 cohort. Column names and cohort definitions are in `contracts/`.
+
+The nine algorithm notebooks document the historical research recipes. Current
+antenatal releases are built with `python -m ml.src.train_antenatal_models`.
+Their features are defined in `ml/src/antenatal.py` and include age when pregnancy
+began, previous live births, first pregnancy, previous stillbirth, previous loss
+and multiple pregnancy. LBW adds education. The clinician form is checked against
+the features in the exported artifacts. Run `python -m ml.src.validate_country`
+to produce the country-transfer reports used by the validation notebook.

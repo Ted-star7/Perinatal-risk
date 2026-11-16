@@ -1,9 +1,9 @@
-
 """Backend settings, read from the environment (see .env.example)."""
 
 from __future__ import annotations
 
 import os
+import secrets
 
 
 def _normalize_db_url(url: str) -> str:
@@ -29,7 +29,12 @@ class Settings:
     )
 
     # Signing secret for auth tokens. Override in production.
-    jwt_secret: str = os.getenv("JWT_SECRET", "dev-secret-change-me")
+    app_env: str = os.getenv("APP_ENV", "development")
+    jwt_secret: str = os.getenv("JWT_SECRET", "")
+    if app_env == "production" and (len(jwt_secret) < 32 or jwt_secret == "dev-secret-change-me"):
+        raise RuntimeError("Set a strong JWT_SECRET before starting production.")
+    if not jwt_secret or jwt_secret == "dev-secret-change-me":
+        jwt_secret = secrets.token_urlsafe(48)
     jwt_algorithm: str = "HS256"
     token_ttl_hours: int = 12
 

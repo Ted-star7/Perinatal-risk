@@ -1,23 +1,27 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth.service';
 import { ApiService } from '../../core/api.service';
+import { AssessmentResult, PredictRequest } from '../../core/models';
 
 interface Assessment {
   patientRef: string;
-  age: number;
-  parity: number;
-  intervalMonths: number;
-  previousStillbirth: boolean;
-  previousLoss: boolean;
-  multiple: boolean;
-  ancVisits: number;
+  age: number | null;
+  firstPregnancy: boolean | null;
+  parity: number | null;
+  previousStillbirth: boolean | null;
+  previousLoss: boolean | null;
+  multiple: boolean | null;
+  education: PredictRequest['education'];
 }
 
-type RiskRole = 'success' | 'warning' | 'danger';
-interface Driver { label: string; weight: number; }
-interface Result { risk: number; band: string; role: RiskRole; drivers: Driver[]; recommendation: string; }
+const EMPTY_FORM: Assessment = {
+  patientRef: '', age: null, firstPregnancy: null, parity: null,
+  previousStillbirth: null, previousLoss: null,
+  multiple: null, education: null,
+};
 
 @Component({
   selector: 'app-clinician-dashboard',
@@ -29,105 +33,182 @@ interface Result { risk: number; band: string; role: RiskRole; drivers: Driver[]
 export class ClinicianDashboardComponent {
   private auth = inject(AuthService);
   private api = inject(ApiService);
+  private revision = 0;
+  private requestId = crypto.randomUUID();
 
   readonly clinicName = computed(() => this.auth.session()?.clinic_name ?? '');
   readonly doctorName = computed(() => this.auth.session()?.doctor_name ?? '');
-
-  readonly form = signal<Assessment>({
-    patientRef: '', age: 29, parity: 1, intervalMonths: 30,
-    previousStillbirth: false, previousLoss: false, multiple: false,
-    ancVisits: 3,
-  });
-
-  // --- validation: required numeric fields, each must be a number in range ---
-  readonly errors = computed<Record<string, string>>(() => {
-    const f = this.form();
-    const e: Record<string, string> = {};
-    const num = (v: number, lo: number, hi: number, label: string): string => {
-      if (v === null || v === undefined || Number.isNaN(v)) return `${label} is required`;
-      if (v < lo || v > hi) return `${label} must be between ${lo} and ${hi}`;
-      return '';
-    };
-    const checks: [keyof Assessment, number, number, string][] = [
-      ['age', 12, 55, 'Age'],
-      ['parity', 0, 16, 'Previous live births'],
-      ['intervalMonths', 0, 240, 'Months since last birth'],
-      ['ancVisits', 0, 20, 'ANC visits'],
-    ];
-    for (const [key, lo, hi, label] of checks) {
-      const msg = num(f[key] as number, lo, hi, label);
-      if (msg) e[key] = msg;
-    }
-    return e;
-  });
-  readonly isValid = computed(() => Object.keys(this.errors()).length === 0);
-
-  readonly result = computed<Result | null>(() =>
-    this.isValid() ? this.assess(this.form()) : null,
-  );
+  readonly form = signal<Assessment>({ ...EMPTY_FORM });
+  readonly submitted = signal(false);
+  readonly keepDraft = signal(false);
+  readonly result = signal<AssessmentResult | null>(null);
+  readonly calculating = signal(false);
   readonly saving = signal(false);
   readonly saved = signal(false);
+  readonly error = signal('');
+  readonly busy = computed(() => this.calculating() || this.saving());
+
+  readonly errors = computed<Record<string, string>>(() => {
+    const f = this.form();
+    const errors: Record<string, string> = {};
+    const validateNumber = (key: keyof Assessment, min: number, max: number, required: boolean) => {
+      const value = f[key];
+      if (value === null && !required) return;
+      if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max) {
+        errors[key] = `Enter a whole number from ${min} to ${max}.`;
+      }
+    };
+    validateNumber('age', 11, 55, true);
+    validateNumber('parity', 0, 16, true);
+    for (const key of ['firstPregnancy', 'previousStillbirth', 'previousLoss', 'multiple'] as const) {
+      if (f[key] === null) errors[key] = 'Choose Yes or No.';
+    }
+    return errors;
+  });
+
+  constructor() { this.restoreDraft(); }
+
+  private draftKey(): string | null {
+    const session = this.auth.session();
+    return session?.doctor_id && session?.clinic_id
+      ? `perinatal.draft.${session.clinic_id}.${session.doctor_id}` : null;
+  }
+
+  toggleDraft(enabled: boolean): void {
+    this.keepDraft.set(enabled);
+    if (enabled) this.persistDraft(); else this.clearDraft();
+  }
+
+  private persistDraft(): void {
+    const key = this.draftKey();
+    if (!key || !this.keepDraft()) return;
+    try {
+      sessionStorage.setItem(key, JSON.stringify({
+        version: 2, form: this.form(), requestId: this.requestId, result: this.result(), updatedAt: Date.now(),
+      }));
+    } catch { this.error.set('This browser could not keep the draft. Keep this tab open while working.'); }
+  }
+
+  private restoreDraft(): void {
+    const key = this.draftKey();
+    if (!key) return;
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (draft.version !== 2) {
+        sessionStorage.removeItem(key);
+        this.error.set('The assessment questions have changed. Enter the details again, including age when the pregnancy began.');
+        return;
+      }
+      if (!draft.form || typeof draft.requestId !== 'string'
+          || Date.now() - draft.updatedAt > 2 * 60 * 60 * 1000) {
+        sessionStorage.removeItem(key);
+        return;
+      }
+      this.form.set({ ...EMPTY_FORM, ...draft.form });
+      this.requestId = draft.requestId;
+      this.result.set(draft.result ?? null);
+      this.keepDraft.set(true);
+    } catch { this.clearDraft(); }
+  }
+
+  private clearDraft(): void {
+    const key = this.draftKey();
+    try { if (key) sessionStorage.removeItem(key); } catch { /* Storage may be disabled. */ }
+  }
 
   update<K extends keyof Assessment>(key: K, value: Assessment[K]): void {
-    this.form.update((f) => ({ ...f, [key]: value }));
+    this.revision++;
+    this.requestId = crypto.randomUUID();
+    this.form.update((form) => {
+      const next = { ...form, [key]: value };
+      if (key === 'firstPregnancy') {
+        next.parity = value === true ? 0 : null;
+        next.previousStillbirth = value === true ? false : null;
+        next.previousLoss = value === true ? false : null;
+      }
+      return next;
+    });
+    this.result.set(null);
     this.saved.set(false);
+    this.error.set('');
+    this.persistDraft();
   }
 
-  /** Coerce a number input; empty string becomes NaN so validation flags it. */
-  num(value: string): number {
-    return value === '' || value === null ? NaN : +value;
+  startAnother(): void {
+    if (this.busy()) return;
+    this.clearDraft();
+    this.keepDraft.set(false);
+    this.revision++;
+    this.requestId = crypto.randomUUID();
+    this.form.set({ ...EMPTY_FORM });
+    this.result.set(null);
+    this.submitted.set(false);
+    this.saved.set(false);
+    this.error.set('');
   }
 
-  barWidth(): number {
-    const r = this.result();
-    return r ? Math.min(100, Math.max(6, r.risk * 100 * 7)) : 0;
-  }
-  maxWeight(): number {
-    const r = this.result();
-    return r ? Math.max(...r.drivers.map((d) => d.weight), 1) : 1;
-  }
-
-  save(): void {
-    if (!this.isValid()) return;
+  private request(): PredictRequest {
     const f = this.form();
-    this.saving.set(true);
-    this.api.predict({
-      patient_ref: f.patientRef || undefined,
-      age: f.age, parity: f.parity, interval_months: f.intervalMonths,
-      previous_stillbirth: f.previousStillbirth, previous_loss: f.previousLoss,
-      multiple: f.multiple, anc_visits: f.ancVisits,
-    }).subscribe({
-      next: () => { this.saving.set(false); this.saved.set(true); },
-      error: () => { this.saving.set(false); },
+    return {
+      request_id: this.requestId,
+      assessment_token: this.result()?.assessment_token ?? undefined,
+      patient_ref: f.patientRef.trim() || undefined,
+      age_at_start: f.age!, parity: f.parity!, first_pregnancy: f.firstPregnancy!,
+      previous_stillbirth: f.previousStillbirth!, previous_loss: f.previousLoss!,
+      multiple: f.multiple!, education: f.education,
+    };
+  }
+
+  assess(): void {
+    this.submitted.set(true);
+    if (this.busy() || Object.keys(this.errors()).length) return;
+    const revision = this.revision;
+    this.calculating.set(true);
+    this.error.set('');
+    this.api.assess(this.request()).subscribe({
+      next: (result) => {
+        this.calculating.set(false);
+        if (revision === this.revision) { this.result.set(result); this.persistDraft(); }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.calculating.set(false);
+        if (revision === this.revision) this.error.set(this.errorMessage(error));
+      },
     });
   }
 
-  private assess(f: Assessment): Result {
-    const firstPregnancy = f.parity === 0;
-    const drivers: Driver[] = [];
-    let z = -3.25;
-    const add = (c: boolean, w: number, l: string) => { if (c) { z += w; drivers.push({ label: l, weight: w }); } };
-    add(f.multiple, 1.4, 'Multiple pregnancy');
-    add(f.previousStillbirth, 1.0, 'Previous stillbirth');
-    add(f.previousLoss, 0.5, 'Previous pregnancy loss');
-    add(f.age < 18, 0.4, 'Age under 18');
-    add(f.age >= 35, 0.5, 'Age 35 or older');
-    add(f.parity >= 5, 0.4, 'Five or more births');
-    add(!firstPregnancy && f.intervalMonths > 0 && f.intervalMonths < 24, 0.4, 'Short birth interval');
-    add(firstPregnancy, 0.3, 'First pregnancy');
-    const risk = 1 / (1 + Math.exp(-z));
-    const pct = risk * 100;
-    const role: RiskRole = pct < 3 ? 'success' : pct < 8 ? 'warning' : 'danger';
-    const band = role === 'success' ? 'low risk' : role === 'warning' ? 'moderate risk' : 'high risk';
-    drivers.sort((a, b) => b.weight - a.weight);
-    return { risk, band, role, drivers, recommendation: this.recommend(role) };
+  save(): void {
+    if (this.busy() || this.saved() || !this.result()) return;
+    const revision = this.revision;
+    this.saving.set(true);
+    this.error.set('');
+    this.api.predict(this.request()).subscribe({
+      next: (saved) => {
+        this.saving.set(false);
+        if (revision === this.revision) {
+          this.result.set(saved.assessment ?? null);
+          this.saved.set(true);
+          this.clearDraft();
+          this.keepDraft.set(false);
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.saving.set(false);
+        if (revision === this.revision) this.error.set(this.errorMessage(error));
+      },
+    });
   }
 
-  private recommend(role: RiskRole): string {
-    if (role === 'danger')
-      return 'Flag for closer follow-up. Discuss a birth plan and arrange referral to a facility that can manage a high-risk delivery. Check blood pressure and urine at every visit.';
-    if (role === 'warning')
-      return 'Keep antenatal visits frequent. Check blood pressure and urine, confirm iron is taken, and review again before delivery.';
-    return 'Continue routine antenatal care. Keep attending visits so blood pressure, urine and iron can be checked.';
+  private errorMessage(error: HttpErrorResponse): string {
+    if (error.status === 409) {
+      this.result.set(null);
+      return 'This assessment needs refreshing. Select Assess pregnancy again before saving.';
+    }
+    if (error.status === 401 || error.status === 403) return 'Your session has ended. Sign in again to continue.';
+    if (error.status === 503) return 'The prediction service is unavailable. Your entries are still here. Try again or contact the project team.';
+    if (error.status === 422) return 'Some entries need checking. Review the pregnancy details and try again.';
+    return 'We could not confirm the request. Check your connection. Your entries are still here.';
   }
 }

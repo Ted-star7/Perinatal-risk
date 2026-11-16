@@ -11,7 +11,8 @@ the eval dashboard) — no database password needed on your machine.
                  beats_checklist=True, test_events=6189)
 
 Override the target with METRICS_API_URL (e.g. http://localhost:8000 when
-running the backend locally). If the server requires a key, set METRICS_KEY.
+running the backend locally). Set METRICS_KEY to the API’s publishing key before saving.
+Configuration is read for each call, so notebook environment changes take effect immediately.
 """
 
 from __future__ import annotations
@@ -23,8 +24,8 @@ import urllib.request
 
 # The PUBLIC API URL — not a secret, no credentials. Points at production so
 # every teammate's save lands in the same hosted database.
-METRICS_API_URL = os.getenv("METRICS_API_URL", "https://perinatal-api.onrender.com")
-METRICS_KEY = os.getenv("METRICS_KEY", "")
+METRICS_API_URL = "https://perinatal-api.onrender.com"
+METRICS_KEY = ""
 
 
 def save_metrics(
@@ -49,22 +50,33 @@ def save_metrics(
         "test_events": int(test_events),
         "is_best": bool(is_best),
     }
+    base_url = os.getenv("METRICS_API_URL", METRICS_API_URL).rstrip("/")
+    publishing_key = os.getenv("METRICS_KEY", METRICS_KEY)
     headers = {"Content-Type": "application/json"}
-    if METRICS_KEY:
-        headers["X-Metrics-Key"] = METRICS_KEY
+    if publishing_key:
+        headers["X-Metrics-Key"] = publishing_key
 
     req = urllib.request.Request(
-        f"{METRICS_API_URL}/metrics",
+        f"{base_url}/metrics",
         data=json.dumps(payload).encode(),
         headers=headers,
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=90) as resp:  # noqa: S310 (fixed host)
-            json.loads(resp.read())
-        print(f"saved metrics for {cohort} / {algorithm} -> {METRICS_API_URL}")
-    except urllib.error.URLError as exc:
-        print(
-            f"could not save metrics ({exc}). The API may be waking up (free tier) "
-            f"— re-run this cell, or set METRICS_API_URL to a reachable backend."
+        with urllib.request.urlopen(req, timeout=90) as resp:
+            confirmation = json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(
+            f"Could not save {cohort}/{algorithm}: the API returned HTTP {exc.code}. "
+            "Check METRICS_API_URL and the publishing key, then retry."
+        ) from exc
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+        raise RuntimeError(
+            f"Could not confirm that {cohort}/{algorithm} was saved. "
+            "Check the API connection and retry."
+        ) from exc
+    if not isinstance(confirmation, dict) or confirmation.get("saved") != f"{cohort}/{algorithm}":
+        raise RuntimeError(
+            "The API did not confirm the submitted model metric. Retry the publication."
         )
+    print(f"saved metrics for {cohort} / {algorithm} -> {base_url}")
