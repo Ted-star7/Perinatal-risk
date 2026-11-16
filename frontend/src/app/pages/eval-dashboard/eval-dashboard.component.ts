@@ -1,9 +1,7 @@
-
-import { Component, OnInit, signal } from '@angular/core';
+﻿import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, ModelMetricResponse } from '../../core/api.service';
 
-/** Model evaluation metrics displayed in simple, understandable language. */
 export interface ModelMetrics {
   cohort: string;
   algorithm: string;
@@ -11,9 +9,16 @@ export interface ModelMetrics {
   rocAuc: number;
   recallAtFlag: number;
   beatsChecklist: boolean;
-  isBest: boolean;
   testEvents: number;
   updatedAt: string;
+}
+
+export interface CohortPerformanceGroup {
+  cohort: string;
+  title: string;
+  description: string;
+  models: ModelMetrics[];
+  topModels: ModelMetrics[];
 }
 
 @Component({
@@ -28,13 +33,39 @@ export class EvalDashboardComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal('');
 
+  private readonly cohortOrder = ['lbw', 'perinatal', 'perinatal_anc'];
+
+  readonly cohortGroups = computed<CohortPerformanceGroup[]>(() => {
+    const records = this.metrics();
+    const groups: CohortPerformanceGroup[] = [];
+
+    for (const cohort of this.cohortOrder) {
+      const models = records
+        .filter((record) => record.cohort === cohort)
+        .sort((a, b) => b.prAuc - a.prAuc);
+
+      if (models.length === 0) {
+        continue;
+      }
+
+      groups.push({
+        cohort,
+        title: this.cohortTitle(cohort),
+        description: this.cohortDescription(cohort),
+        models,
+        topModels: models.slice(0, 2),
+      });
+    }
+
+    return groups;
+  });
+
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
     this.loadMetrics();
   }
 
-  /** Retrieve the latest shared model evaluation results. */
   loadMetrics(): void {
     this.loading.set(true);
     this.error.set('');
@@ -48,7 +79,6 @@ export class EvalDashboardComponent implements OnInit {
           rocAuc: record.roc_auc,
           recallAtFlag: record.recall_at_flag,
           beatsChecklist: record.beats_checklist,
-          isBest: record.is_best,
           testEvents: record.test_events,
           updatedAt: record.updated_at,
         }));
@@ -66,22 +96,32 @@ export class EvalDashboardComponent implements OnInit {
     });
   }
 
-  /** Convert technical cohort identifiers into familiar descriptions. */
- cohortLabel(cohort: string): string {
-  const labels: Record<string, string> = {
-    lbw: 'Babies born weighing less than 2.5 kg',
-    perinatal: 'Risk of death around birth',
-    perinatal_anc: 'Risk of death around birth (with pregnancy check-up information)',
-  };
+  cohortTitle(cohort: string): string {
+    const labels: Record<string, string> = {
+      lbw: 'Low birth weight prediction',
+      perinatal: 'Perinatal death prediction',
+      perinatal_anc: 'ANC-enhanced perinatal death prediction',
+    };
 
-  return labels[cohort] ?? cohort;
-}
+    return labels[cohort] ?? cohort;
+  }
 
-  /** Convert technical algorithm identifiers into readable names. */
+  cohortDescription(cohort: string): string {
+    const descriptions: Record<string, string> = {
+      lbw: 'Identifying babies born weighing less than 2.5 kg.',
+      perinatal: 'Identifying babies at risk of death around birth.',
+      perinatal_anc:
+        'Perinatal death prediction incorporating antenatal care information.',
+    };
+
+    return descriptions[cohort] ?? '';
+  }
+
   algorithmLabel(algorithm: string): string {
     const labels: Record<string, string> = {
       gradient_boosting: 'Gradient Boosting',
       random_forest: 'Random Forest',
+      logistic_regression: 'Logistic Regression',
     };
 
     return labels[algorithm] ?? algorithm;
