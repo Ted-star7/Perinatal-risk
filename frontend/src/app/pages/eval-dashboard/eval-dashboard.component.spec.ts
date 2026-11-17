@@ -4,7 +4,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { ApiService, ModelMetricResponse, ModelRelease } from '../../core/api.service';
 
 const records: ModelMetricResponse[] = ['perinatal', 'perinatal_anc', 'lbw'].map((cohort) => ({
-  cohort, algorithm: 'random_forest', pr_auc: 0.1, roc_auc: 0.6,
+  cv_pr_auc: 0.1, cohort, algorithm: 'random_forest', pr_auc: 0.1, roc_auc: 0.6,
   recall_at_flag: 0.5, beats_checklist: true, is_best: true,
   test_events: 100, updated_at: '2026-11-15T00:00:00',
 }));
@@ -49,9 +49,9 @@ describe('EvalDashboardComponent', () => {
   it('keeps submitted rankings separate from a release with the same algorithm name', () => {
     const base = records[2];
     api.metrics.and.returnValue(of([
-      { ...base, algorithm: 'random_forest', pr_auc: 0.14 },
-      { ...base, algorithm: 'gradient_boosting', pr_auc: 0.17, is_best: false },
-      { ...base, algorithm: 'logistic_regression', pr_auc: 0.13, is_best: false },
+      { ...base, algorithm: 'random_forest', cv_pr_auc: 0.19, pr_auc: 0.14 },
+      { ...base, algorithm: 'gradient_boosting', cv_pr_auc: 0.18, pr_auc: 0.17, is_best: false },
+      { ...base, algorithm: 'logistic_regression', cv_pr_auc: 0.17, pr_auc: 0.13, is_best: false },
     ]));
     api.releases.and.returnValue(of([{
       cohort: 'lbw', algorithm: 'random_forest', available: true, serving: true,
@@ -64,7 +64,7 @@ describe('EvalDashboardComponent', () => {
     component.loadMetrics();
     fixture.detectChanges();
     expect(component.cohortGroups()[0].topModels.map((row) => row.algorithm))
-      .toEqual(['gradient_boosting', 'random_forest']);
+      .toEqual(['random_forest', 'gradient_boosting']);
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('tbody tr.selected')).toBeNull();
     expect(element.querySelector('.calibration')).toBeNull();

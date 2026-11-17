@@ -26,6 +26,32 @@ from app.schemas import MetricsIn
 router = APIRouter(tags=["metrics"])
 
 
+@router.get("/evaluation-metrics")
+def evaluation_metrics(who: dict = Depends(current_doctor)) -> list[dict]:
+    """Compare the exact ongoing-pregnancy releases using training CV AP."""
+    from app.scoring import get_model
+
+    records = []
+    for cohort in ["perinatal", "lbw", "perinatal_anc"]:
+        model, _, identifier = get_model(cohort)
+        metadata = model.release_metadata_
+        report = metadata["evaluation"]
+        candidates = {r["algorithm"]: r["cv_pr_auc"] for r in report["candidates"]}
+        best = max(candidates.values())
+        for row in report["evaluation_metrics"]:
+            records.append(dict(
+                row,
+                is_best=candidates[row["algorithm"]] == best,
+                cv_pr_auc=candidates[row["algorithm"]],
+                cases_caught=round(row["recall_at_flag"] * row["test_events"]),
+                updated_at=metadata["created_at"],
+                evaluation_id=identifier,
+                prediction_context=metadata["prediction_context"],
+                selection_metric="mean_grouped_cv_average_precision",
+            ))
+    return records
+
+
 def read_metrics_access(
     x_metrics_key: str | None = Header(default=None),
     creds=Depends(_bearer),

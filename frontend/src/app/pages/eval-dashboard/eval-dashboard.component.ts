@@ -6,6 +6,8 @@ import { ApiService, ModelRelease } from '../../core/api.service';
 
 /** Model evaluation metrics displayed in simple, understandable language. */
 export interface ModelMetrics {
+  cvPrAuc?: number;
+  casesCaught?: number;
   cohort: string;
   algorithm: string;
   prAuc: number;
@@ -75,6 +77,8 @@ export class EvalDashboardComponent implements OnInit {
         this.releases.set(releases);
         const mappedRecords: ModelMetrics[] = records.map((record) => ({
           cohort: record.cohort,
+          cvPrAuc: record.cv_pr_auc,
+          casesCaught: record.cases_caught,
           algorithm: record.algorithm,
           prAuc: record.pr_auc,
           rocAuc: record.roc_auc,
@@ -93,7 +97,7 @@ export class EvalDashboardComponent implements OnInit {
 
   rows(cohort: string): ModelMetrics[] {
     return this.metrics().filter((row) => row.cohort === cohort)
-      .sort((a, b) => b.prAuc - a.prAuc || a.algorithm.localeCompare(b.algorithm));
+      .sort((a, b) => (b.cvPrAuc ?? -1) - (a.cvPrAuc ?? -1) || a.algorithm.localeCompare(b.algorithm));
   }
 
   cohortLabel(cohort: string): string {

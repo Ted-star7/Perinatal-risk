@@ -33,6 +33,10 @@ export interface ModelRelease {
 }
 
 export interface ModelMetricResponse {
+  cv_pr_auc?: number;
+  cv_pr_auc_std?: number;
+  cases_caught?: number;
+  evaluation_id?: string;
   cohort: string;
   algorithm: string;
   pr_auc: number;
@@ -95,7 +99,7 @@ export class ApiService {
   }
 
   metrics(): Observable<ModelMetricResponse[]> {
-    return this.http.get<ModelMetricResponse[]>(`${API_BASE}/metrics`);
+    return this.http.get<ModelMetricResponse[]>(`${API_BASE}/evaluation-metrics`);
   }
 
 }
