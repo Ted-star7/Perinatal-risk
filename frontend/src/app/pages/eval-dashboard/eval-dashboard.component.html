@@ -62,8 +62,8 @@
   } @else {
     <section class="source-heading">
       <h2>Model comparison selected by mean CV PR-AUC</h2>
-      <p>Ongoing-pregnancy models: each cohort is ranked by mean PR-AUC across five grouped training-validation folds. These figures come from the evaluation reports bundled with the exact models loaded by the API. Test results are reported separately.</p>
-      <p>The clinician assessment uses these ongoing-pregnancy input definitions. The ANC cohort is shown last for research comparison. Model identifiers and recorded selection methods are available under API model releases.</p>
+      <p>Approved research comparison: scikit-learn 1.9.1, five grouped training-validation folds. Each cohort is selected by mean CV PR-AUC. These approved results are saved in the database; test performance is reported separately.</p>
+      <p>This comparison uses the original notebook predictors, including completed-pregnancy information. The ongoing-pregnancy assessment has a separate input contract and fitted models, shown under API model releases.</p>
     </section>
     @for (group of cohortGroups(); track group.cohort) {
       <section class="cohort">

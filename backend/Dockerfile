@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 
 COPY backend/app ./app
+COPY backend/evaluations ./evaluations
 COPY ml ./ml
 COPY contracts ./contracts
 COPY backend/models ./model-release

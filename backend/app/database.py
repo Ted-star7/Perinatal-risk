@@ -82,6 +82,10 @@ def init_db() -> None:
             )
         )
 
+        from app.evaluation import install_approved_evaluation
+
+        install_approved_evaluation(con)
+
 
 def get_db() -> Iterator[Session]:
     db = SessionLocal()

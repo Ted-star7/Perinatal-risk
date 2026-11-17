@@ -128,16 +128,15 @@ account. The database persists between runs. Open `/performance` directly after 
 and the actual serving releases. Its navigation link is hidden during clinician
 testing. Signed-in testers can still open this route, as requested. `--publish-local` updates only http://localhost:8000/metrics.
 
-The evaluation page has two views, ordered perinatal (primary), LBW
-(secondary), then ANC research. **CV model comparison** reads `/evaluation-metrics`
-and ranks the ongoing-pregnancy candidates by mean grouped training CV AP.
-The API derives these rows from the exact loaded model bundles, including their
-own test metrics and model identifiers. It does not use a test-run snapshot or
-rank legacy database submissions to select clinician models. **API model releases**
-shows each loaded file's own calibration, predictors and selection method.
-The research notebooks have a different predictor definition and remain a
-separate experiment. Patient inputs are evaluated by the selected fitted model;
-CV scores are evaluation summaries, not individual prediction results.
+The evaluation page presents the approved original notebook comparison, selected
+by mean grouped training CV PR-AUC: perinatal GB, LBW GB, ANC LR. Startup installs
+this versioned nine-row set in `approved_model_metrics` once and replaces the
+active legacy `model_metrics` values. Previous submissions are retained in
+`model_metrics_archive`. `/evaluation-metrics` reads the approved database set,
+so later unversioned notebook submissions cannot mix or overwrite its figures.
+The approved set is aggregate evaluation data, not executed notebook output.
+The ongoing-pregnancy input form and its fitted model releases remain separate;
+**API model releases** shows their own evaluation and predictor definitions.
 
 The antenatal trainer compares logistic regression, random forest and gradient
 boosting for each cohort using five grouped training folds. It selects by mean
