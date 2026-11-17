@@ -1,11 +1,14 @@
 .git
 .venv
+.venv-notebooks
+.venv-research
 **/__pycache__
 **/*.pyc
 frontend
 node_modules
 data
 ml/notebooks
+ml/notebook-runs
 .env
 .env.*
 .claude
