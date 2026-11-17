@@ -32,9 +32,13 @@ ml/models/*
 __pycache__/
 *.py[cod]
 .venv/
+.venv-research/
+.venv-notebooks/
 venv/
 env/
 .ipynb_checkpoints/
+# Executed notebooks can contain licensed survey rows and must stay private.
+ml/notebook-runs/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/

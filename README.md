@@ -49,6 +49,10 @@ KE + TZ cohorts ─► build_cohort() ─► combined + cleaned + 80/20 split
 - `db.metrics.save_metrics()` publishes evaluation results to the configured API,
   which stores them in PostgreSQL. Set the destination publishing key first.
 
+The [17 November notebook audit](docs/notebook-results-2026-11-17.md) contains
+fresh CV/test scores, confusion counts and the controlled sklearn-version
+comparison. See [notebook setup](ml/notebooks/README.md) for the pinned kernels.
+
 ## Quick start
 
 ```bash

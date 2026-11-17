@@ -11,4 +11,6 @@ pandas==2.2.3
 numpy==2.1.1
 pyyaml==6.0.2
 scikit-learn==1.9.1
+scipy==1.18.1
+threadpoolctl==3.8.0
 joblib==1.4.2

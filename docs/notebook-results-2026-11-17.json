@@ -1,0 +1,1589 @@
+{
+  "audit_date": "2026-11-17",
+  "timezone": "Africa/Nairobi",
+  "base_commit": "14d7c70c853c93411ff12b6a3bcf0132b50552d3",
+  "data_sha256": {
+    "ke_lbw.csv": "04e0a0fe50ca310c19a707b51d17eb06db416b65e8865aa0409a49a610930fdf",
+    "ke_perinatal.csv": "15938592263841ebe5de1e4c84cbbdf0b8b461829229d758cecb9b6db922fa50",
+    "ke_perinatal_anc.csv": "500e13976e73cd8c405c2ef11df751dcf9c8f803b21a5f7fd8ae133ab61321f4",
+    "tz_lbw.csv": "e04d03287f15aad202b3fe1a0ee7c94d2af312b68fe582ec831695a2aba3605b",
+    "tz_perinatal.csv": "80239c1d2fe92e469c7c385b0aa1b16d26e73665c75f71e036b9f14374a5dd3a",
+    "tz_perinatal_anc.csv": "614418c7ae26afe5feaf421aac963076c9532eae956cfa3284e63c2e7e42c77e"
+  },
+  "source_notebook_sha256": {
+    "ml/notebooks/kenya/eda_lbw.ipynb": "db1f238d82dc2c4c84c838495f9448717e770b81f30c26727a667c0ac17d2e2b",
+    "ml/notebooks/kenya/eda_perinatal.ipynb": "cf278782effec94a69a7754fbae8037409e619cfd244d3463862d7e0da4bbfa4",
+    "ml/notebooks/kenya/eda_perinatal_anc.ipynb": "6d56a9107e2ba7ddfb08dc29f05788bf68d073b5444362d978e020779276f493",
+    "ml/notebooks/modeling/anc_gradient_boosting.ipynb": "d7f959dd0a6e30b1e98235f7d3bc6403d254c1c439100d8f35a67e602806e83f",
+    "ml/notebooks/modeling/anc_logreg.ipynb": "4fd16745ff5ffbb6973f9851e150c88bd7c2262f87147ea84d4e24cdecc714eb",
+    "ml/notebooks/modeling/anc_random_forest.ipynb": "71bc9888ce8af7f299bf842aeca370c1859a2a15a295c4009f0d4765f851f6a9",
+    "ml/notebooks/modeling/checklist_baseline.ipynb": "33d6f1344dbd4f839b9cc3510b4c1d83f9a02aa68d7d0c08ce3d40518112b7d6",
+    "ml/notebooks/modeling/lbw_gradient_boosting.ipynb": "f03b909c8f1109f120e8a93699082a918d0d5bd7cabf49ab391e1a864a942c2e",
+    "ml/notebooks/modeling/lbw_logreg.ipynb": "da011e4ba14e959c6f463e5b5b12180ed50938e7405cb3b3b3eb2caf95ce14c6",
+    "ml/notebooks/modeling/lbw_random_forest.ipynb": "43c05e636e7b068fe5f4cef6d7c02e00b25dc59c71778baf9d8b6b16376842eb",
+    "ml/notebooks/modeling/model_comparison.ipynb": "3047f2f04f179ec7b8e7e3be4bd9e6c7563291aec718721e86e8c456e080daee",
+    "ml/notebooks/modeling/perinatal_gradient_boosting.ipynb": "56359a6bfd2af3afe6d07af88e024da57e9e9c7da649e6153f1f8e068712e281",
+    "ml/notebooks/modeling/perinatal_logreg.ipynb": "36ff619467e6051b1ea7ca1be8bdffc1fcf94b5179ad7262f2ba6ac13eebb38b",
+    "ml/notebooks/modeling/perinatal_random_forest.ipynb": "8431ced9fe13e9aba956315785a50d93d60a9f605d6f5be3d6689d71925b8a14",
+    "ml/notebooks/modeling/validation_shap.ipynb": "a19f419128e949412fbdb8e8b7fb095adc220d53c30afe83e5d83518ea6a97ab",
+    "ml/notebooks/pooled/correlation_features.ipynb": "0c031529a7404de0831327a5b22aa874dd8929f8006a0f55223695c6c5b55634",
+    "ml/notebooks/tanzania/eda_lbw.ipynb": "82074a39eb4c17042f9cef5ca2c8b307f5c286a5d913fe2a5cb72476121820df",
+    "ml/notebooks/tanzania/eda_perinatal.ipynb": "b7ae2254c3aea073666618b3a0d817f800442e2c463948c02a085bf206201217",
+    "ml/notebooks/tanzania/eda_perinatal_anc.ipynb": "db4c4fc3cc6b2ed9e3a6b70462b25526ac10fe8300c9b803b8531b0255917e49"
+  },
+  "publishing": "Disabled. No database metrics or serving model releases were changed.",
+  "experiments": [
+    {
+      "sklearn_version": "1.9.1",
+      "python_version": "3.12.16",
+      "dependencies": {
+        "numpy": "2.1.1",
+        "pandas": "2.2.3",
+        "scipy": "1.18.1",
+        "joblib": "1.4.2",
+        "threadpoolctl": "3.8.0",
+        "matplotlib": "3.9.2",
+        "seaborn": "0.13.2",
+        "nbclient": "0.11.0",
+        "nbformat": "5.11.1",
+        "nbconvert": "7.17.2",
+        "ipykernel": "7.4.0",
+        "PyYAML": "6.0.2"
+      },
+      "feature_context": "Original notebook research predictors; not the antenatal_history_v1 serving profile.",
+      "cv_scoring": "Unweighted average precision on five cluster-grouped training folds.",
+      "models": [
+        {
+          "notebook": "perinatal_logreg",
+          "cohort": "perinatal",
+          "algorithm": "logistic_regression",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "interval_imputed"
+          ],
+          "train_rows": 24613,
+          "test_rows": 6189,
+          "train_events": 869,
+          "test_events": 220,
+          "train_clusters": 1854,
+          "test_clusters": 465,
+          "split_sha256": "1c01fce9a130d776fa11541e1a9b9d7c2dd4df7c75e2d10c8d1cf6b712fd773d",
+          "cv_pr_auc_folds": [
+            0.06639390420030114,
+            0.1012924892833505,
+            0.06990821996764066,
+            0.0828140778136461,
+            0.076267728051442
+          ],
+          "cv_pr_auc_mean": 0.07933528386327607,
+          "cv_pr_auc_std": 0.01232866267801052,
+          "parameters": {
+            "classifier__C": 10
+          },
+          "test_pr_auc": 0.07225642352973452,
+          "test_roc_auc": 0.5988756301497129,
+          "model": {
+            "tp": 129,
+            "fp": 2679,
+            "tn": 3290,
+            "fn": 91,
+            "flagged": 2808,
+            "recall": 0.5863636363636363,
+            "precision": 0.045940170940170943,
+            "specificity": 0.5511811023622047
+          },
+          "checklist": {
+            "tp": 115,
+            "fp": 2693,
+            "tn": 3276,
+            "fn": 105,
+            "flagged": 2808,
+            "recall": 0.5227272727272727,
+            "precision": 0.04095441595441596,
+            "specificity": 0.5488356508627911
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 129,
+            "possible_tp_max": 129
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.013783863909848062,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "perinatal_random_forest",
+          "cohort": "perinatal",
+          "algorithm": "random_forest",
+          "features": [
+            "interval_imputed",
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple"
+          ],
+          "train_rows": 24613,
+          "test_rows": 6189,
+          "train_events": 869,
+          "test_events": 220,
+          "train_clusters": 1854,
+          "test_clusters": 465,
+          "split_sha256": "1c01fce9a130d776fa11541e1a9b9d7c2dd4df7c75e2d10c8d1cf6b712fd773d",
+          "cv_pr_auc_folds": [
+            0.07403664118929595,
+            0.09330774108692762,
+            0.07748103077722256,
+            0.09071381650752965,
+            0.06897537839204736
+          ],
+          "cv_pr_auc_mean": 0.08090292159060462,
+          "cv_pr_auc_std": 0.00950004879828366,
+          "parameters": {
+            "model__max_depth": null,
+            "model__max_features": "sqrt",
+            "model__min_samples_leaf": 150
+          },
+          "test_pr_auc": 0.07305768217855353,
+          "test_roc_auc": 0.5997943922386877,
+          "model": {
+            "tp": 124,
+            "fp": 2684,
+            "tn": 3285,
+            "fn": 96,
+            "flagged": 2808,
+            "recall": 0.5636363636363636,
+            "precision": 0.04415954415954416,
+            "specificity": 0.5503434411124142
+          },
+          "checklist": {
+            "tp": 115,
+            "fp": 2693,
+            "tn": 3276,
+            "fn": 105,
+            "flagged": 2808,
+            "recall": 0.5227272727272727,
+            "precision": 0.04095441595441596,
+            "specificity": 0.5488356508627911
+          },
+          "cutoff_ties": {
+            "rows": 159,
+            "slots": 34,
+            "possible_tp_min": 124,
+            "possible_tp_max": 133
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.010621377451263727,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "perinatal_gradient_boosting",
+          "cohort": "perinatal",
+          "algorithm": "gradient_boosting",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "preceding_interval_m",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "multiple",
+            "interval_imputed"
+          ],
+          "train_rows": 24613,
+          "test_rows": 6189,
+          "train_events": 869,
+          "test_events": 220,
+          "train_clusters": 1854,
+          "test_clusters": 465,
+          "split_sha256": "1c01fce9a130d776fa11541e1a9b9d7c2dd4df7c75e2d10c8d1cf6b712fd773d",
+          "cv_pr_auc_folds": [
+            0.06958391938865002,
+            0.0985125950815163,
+            0.07878801905560329,
+            0.07978520276202068,
+            0.08132931910392391
+          ],
+          "cv_pr_auc_mean": 0.08159981107834284,
+          "cv_pr_auc_std": 0.00939889418458854,
+          "parameters": {
+            "l2_regularization": 1.0,
+            "learning_rate": 0.05,
+            "max_iter": 50,
+            "max_leaf_nodes": 4,
+            "min_samples_leaf": 150
+          },
+          "test_pr_auc": 0.07424033444113373,
+          "test_roc_auc": 0.6064183889489636,
+          "model": {
+            "tp": 130,
+            "fp": 2678,
+            "tn": 3291,
+            "fn": 90,
+            "flagged": 2808,
+            "recall": 0.5909090909090909,
+            "precision": 0.046296296296296294,
+            "specificity": 0.5513486346121629
+          },
+          "checklist": {
+            "tp": 115,
+            "fp": 2693,
+            "tn": 3276,
+            "fn": 105,
+            "flagged": 2808,
+            "recall": 0.5227272727272727,
+            "precision": 0.04095441595441596,
+            "specificity": 0.5488356508627911
+          },
+          "cutoff_ties": {
+            "rows": 122,
+            "slots": 101,
+            "possible_tp_min": 127,
+            "possible_tp_max": 130
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.010508283155033717,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "lbw_logreg",
+          "cohort": "lbw",
+          "algorithm": "logistic_regression",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "interval_imputed",
+            "multiple",
+            "education",
+            "no_anc",
+            "anc4plus"
+          ],
+          "train_rows": 7076,
+          "test_rows": 1849,
+          "train_events": 581,
+          "test_events": 130,
+          "train_clusters": 1724,
+          "test_clusters": 430,
+          "split_sha256": "4cd39cea27aa23004f949ff2e0e398a1e5ae14a502335593b4aa85c08e6de00a",
+          "cv_pr_auc_folds": [
+            0.19844794497408202,
+            0.1739646997159231,
+            0.2004309454797961,
+            0.21089704550403196,
+            0.18300057428079697
+          ],
+          "cv_pr_auc_mean": 0.19334824199092604,
+          "cv_pr_auc_std": 0.013167597367290167,
+          "parameters": {
+            "clf__C": 0.001
+          },
+          "test_pr_auc": 0.142923333749954,
+          "test_roc_auc": 0.6126706045554213,
+          "model": {
+            "tp": 76,
+            "fp": 694,
+            "tn": 1025,
+            "fn": 54,
+            "flagged": 770,
+            "recall": 0.5846153846153846,
+            "precision": 0.0987012987012987,
+            "specificity": 0.5962769051774287
+          },
+          "checklist": {
+            "tp": 69,
+            "fp": 701,
+            "tn": 1018,
+            "fn": 61,
+            "flagged": 770,
+            "recall": 0.5307692307692308,
+            "precision": 0.08961038961038961,
+            "specificity": 0.5922047702152414
+          },
+          "cutoff_ties": {
+            "rows": 2,
+            "slots": 1,
+            "possible_tp_min": 76,
+            "possible_tp_max": 76
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.01472182140680404,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "lbw_random_forest",
+          "cohort": "lbw",
+          "algorithm": "random_forest",
+          "features": [
+            "interval_imputed",
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "education",
+            "no_anc",
+            "anc4plus"
+          ],
+          "train_rows": 7076,
+          "test_rows": 1849,
+          "train_events": 581,
+          "test_events": 130,
+          "train_clusters": 1724,
+          "test_clusters": 430,
+          "split_sha256": "4cd39cea27aa23004f949ff2e0e398a1e5ae14a502335593b4aa85c08e6de00a",
+          "cv_pr_auc_folds": [
+            0.20903020179375376,
+            0.19470457410799272,
+            0.16911228481709073,
+            0.21993251504446878,
+            0.19641446834865367
+          ],
+          "cv_pr_auc_mean": 0.1978388088223919,
+          "cv_pr_auc_std": 0.017031996275974844,
+          "parameters": {
+            "model__max_depth": 5,
+            "model__max_features": "sqrt",
+            "model__min_samples_leaf": 10
+          },
+          "test_pr_auc": 0.13701557673036296,
+          "test_roc_auc": 0.626334631046673,
+          "model": {
+            "tp": 79,
+            "fp": 691,
+            "tn": 1028,
+            "fn": 51,
+            "flagged": 770,
+            "recall": 0.6076923076923076,
+            "precision": 0.1025974025974026,
+            "specificity": 0.598022105875509
+          },
+          "checklist": {
+            "tp": 69,
+            "fp": 701,
+            "tn": 1018,
+            "fn": 61,
+            "flagged": 770,
+            "recall": 0.5307692307692308,
+            "precision": 0.08961038961038961,
+            "specificity": 0.5922047702152414
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 79,
+            "possible_tp_max": 79
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.019042350732801507,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "lbw_gradient_boosting",
+          "cohort": "lbw",
+          "algorithm": "gradient_boosting",
+          "features": [
+            "interval_imputed",
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "education",
+            "no_anc",
+            "anc4plus"
+          ],
+          "train_rows": 7076,
+          "test_rows": 1849,
+          "train_events": 581,
+          "test_events": 130,
+          "train_clusters": 1724,
+          "test_clusters": 430,
+          "split_sha256": "4cd39cea27aa23004f949ff2e0e398a1e5ae14a502335593b4aa85c08e6de00a",
+          "cv_pr_auc_folds": [
+            0.210108391564084,
+            0.17032773786153393,
+            0.2062919302736524,
+            0.20851523918181225,
+            0.20032834296073124
+          ],
+          "cv_pr_auc_mean": 0.19911432836836276,
+          "cv_pr_auc_std": 0.014770958961577901,
+          "parameters": {
+            "model__l2_regularization": 5.0,
+            "model__learning_rate": 0.05,
+            "model__max_iter": 100,
+            "model__max_leaf_nodes": 7,
+            "model__min_samples_leaf": 20
+          },
+          "test_pr_auc": 0.15897811649962357,
+          "test_roc_auc": 0.6182306349845617,
+          "model": {
+            "tp": 73,
+            "fp": 697,
+            "tn": 1022,
+            "fn": 57,
+            "flagged": 770,
+            "recall": 0.5615384615384615,
+            "precision": 0.09480519480519481,
+            "specificity": 0.5945317044793484
+          },
+          "checklist": {
+            "tp": 69,
+            "fp": 701,
+            "tn": 1018,
+            "fn": 61,
+            "flagged": 770,
+            "recall": 0.5307692307692308,
+            "precision": 0.08961038961038961,
+            "specificity": 0.5922047702152414
+          },
+          "cutoff_ties": {
+            "rows": 22,
+            "slots": 8,
+            "possible_tp_min": 72,
+            "possible_tp_max": 74
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.016514434165473945,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "anc_logreg",
+          "cohort": "perinatal_anc",
+          "algorithm": "logistic_regression",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "interval_imputed",
+            "no_anc",
+            "anc4plus",
+            "urine_tested",
+            "iron_tablets"
+          ],
+          "train_rows": 13232,
+          "test_rows": 3310,
+          "train_events": 412,
+          "test_events": 108,
+          "train_clusters": 1847,
+          "test_clusters": 461,
+          "split_sha256": "7114372a2bffbbd429b5106cb2cbd5cfa55fe4f33194f962430f0c934f589b46",
+          "cv_pr_auc_folds": [
+            0.11431619407427052,
+            0.07998463088676921,
+            0.059142677781862274,
+            0.06076001929245107,
+            0.09445734089714825
+          ],
+          "cv_pr_auc_mean": 0.08173217258650026,
+          "cv_pr_auc_std": 0.020865372060713212,
+          "parameters": {
+            "classifier__C": 0.1
+          },
+          "test_pr_auc": 0.08492154130590385,
+          "test_roc_auc": 0.6323622967127027,
+          "model": {
+            "tp": 66,
+            "fp": 1391,
+            "tn": 1811,
+            "fn": 42,
+            "flagged": 1457,
+            "recall": 0.6111111111111112,
+            "precision": 0.045298558682223745,
+            "specificity": 0.5655840099937539
+          },
+          "checklist": {
+            "tp": 49,
+            "fp": 1408,
+            "tn": 1794,
+            "fn": 59,
+            "flagged": 1457,
+            "recall": 0.4537037037037037,
+            "precision": 0.033630748112560054,
+            "specificity": 0.5602748282323547
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 66,
+            "possible_tp_max": 66
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.023328195151789802,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "anc_random_forest",
+          "cohort": "perinatal_anc",
+          "algorithm": "random_forest",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "preceding_interval_m",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "multiple",
+            "no_anc",
+            "anc4plus",
+            "urine_tested",
+            "iron_tablets"
+          ],
+          "train_rows": 13232,
+          "test_rows": 3310,
+          "train_events": 412,
+          "test_events": 108,
+          "train_clusters": 1847,
+          "test_clusters": 461,
+          "split_sha256": "7114372a2bffbbd429b5106cb2cbd5cfa55fe4f33194f962430f0c934f589b46",
+          "cv_pr_auc_folds": [
+            0.11415009047469253,
+            0.060466398976509544,
+            0.07436198801567183,
+            0.04885587707978193,
+            0.056134292498934
+          ],
+          "cv_pr_auc_mean": 0.07079372940911796,
+          "cv_pr_auc_std": 0.02321778940185053,
+          "parameters": {
+            "n_estimators": 400,
+            "max_depth": 8,
+            "min_samples_leaf": 10
+          },
+          "test_pr_auc": 0.09185807536911589,
+          "test_roc_auc": 0.63133863094825,
+          "model": {
+            "tp": 70,
+            "fp": 1387,
+            "tn": 1815,
+            "fn": 38,
+            "flagged": 1457,
+            "recall": 0.6481481481481481,
+            "precision": 0.04804392587508579,
+            "specificity": 0.5668332292317302
+          },
+          "checklist": {
+            "tp": 49,
+            "fp": 1408,
+            "tn": 1794,
+            "fn": 59,
+            "flagged": 1457,
+            "recall": 0.4537037037037037,
+            "precision": 0.033630748112560054,
+            "specificity": 0.5602748282323547
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 70,
+            "possible_tp_max": 70
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.025958277694905985,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "anc_gradient_boosting",
+          "cohort": "perinatal_anc",
+          "algorithm": "gradient_boosting",
+          "features": [
+            "interval_imputed",
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "no_anc",
+            "anc4plus",
+            "urine_tested",
+            "iron_tablets"
+          ],
+          "train_rows": 13232,
+          "test_rows": 3310,
+          "train_events": 412,
+          "test_events": 108,
+          "train_clusters": 1847,
+          "test_clusters": 461,
+          "split_sha256": "7114372a2bffbbd429b5106cb2cbd5cfa55fe4f33194f962430f0c934f589b46",
+          "cv_pr_auc_folds": [
+            0.1267941894609672,
+            0.06807119367065595,
+            0.07375293643622668,
+            0.055959710448217306,
+            0.07254498369323131
+          ],
+          "cv_pr_auc_mean": 0.0794246027418597,
+          "cv_pr_auc_std": 0.02450663490063897,
+          "parameters": {
+            "model__l2_regularization": 1.0,
+            "model__learning_rate": 0.05,
+            "model__max_iter": 50,
+            "model__max_leaf_nodes": 4,
+            "model__min_samples_leaf": 80
+          },
+          "test_pr_auc": 0.07863073822459546,
+          "test_roc_auc": 0.6217786337242927,
+          "model": {
+            "tp": 63,
+            "fp": 1394,
+            "tn": 1808,
+            "fn": 45,
+            "flagged": 1457,
+            "recall": 0.5833333333333334,
+            "precision": 0.043239533287577216,
+            "specificity": 0.5646470955652717
+          },
+          "checklist": {
+            "tp": 49,
+            "fp": 1408,
+            "tn": 1794,
+            "fn": 59,
+            "flagged": 1457,
+            "recall": 0.4537037037037037,
+            "precision": 0.033630748112560054,
+            "specificity": 0.5602748282323547
+          },
+          "cutoff_ties": {
+            "rows": 490,
+            "slots": 182,
+            "possible_tp_min": 60,
+            "possible_tp_max": 74
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.02739925076879877,
+          "cv_scoring": "unweighted average precision"
+        }
+      ],
+      "execution": [
+        {
+          "notebook": "ml/notebooks/kenya/eda_lbw.ipynb",
+          "status": "passed",
+          "source_sha256": "db1f238d82dc2c4c84c838495f9448717e770b81f30c26727a667c0ac17d2e2b",
+          "elapsed_seconds": 16.2
+        },
+        {
+          "notebook": "ml/notebooks/kenya/eda_perinatal.ipynb",
+          "status": "passed",
+          "source_sha256": "cf278782effec94a69a7754fbae8037409e619cfd244d3463862d7e0da4bbfa4",
+          "elapsed_seconds": 26.4
+        },
+        {
+          "notebook": "ml/notebooks/kenya/eda_perinatal_anc.ipynb",
+          "status": "passed",
+          "source_sha256": "6d56a9107e2ba7ddfb08dc29f05788bf68d073b5444362d978e020779276f493",
+          "elapsed_seconds": 6.6
+        },
+        {
+          "notebook": "ml/notebooks/modeling/anc_gradient_boosting.ipynb",
+          "status": "passed",
+          "source_sha256": "d7f959dd0a6e30b1e98235f7d3bc6403d254c1c439100d8f35a67e602806e83f",
+          "elapsed_seconds": 126.0
+        },
+        {
+          "notebook": "ml/notebooks/modeling/anc_logreg.ipynb",
+          "status": "passed",
+          "source_sha256": "4fd16745ff5ffbb6973f9851e150c88bd7c2262f87147ea84d4e24cdecc714eb",
+          "elapsed_seconds": 24.1
+        },
+        {
+          "notebook": "ml/notebooks/modeling/anc_random_forest.ipynb",
+          "status": "passed",
+          "source_sha256": "71bc9888ce8af7f299bf842aeca370c1859a2a15a295c4009f0d4765f851f6a9",
+          "elapsed_seconds": 112.2
+        },
+        {
+          "notebook": "ml/notebooks/modeling/checklist_baseline.ipynb",
+          "status": "passed",
+          "source_sha256": "33d6f1344dbd4f839b9cc3510b4c1d83f9a02aa68d7d0c08ce3d40518112b7d6",
+          "elapsed_seconds": 10.1
+        },
+        {
+          "notebook": "ml/notebooks/modeling/lbw_gradient_boosting.ipynb",
+          "status": "passed",
+          "source_sha256": "f03b909c8f1109f120e8a93699082a918d0d5bd7cabf49ab391e1a864a942c2e",
+          "elapsed_seconds": 65.8
+        },
+        {
+          "notebook": "ml/notebooks/modeling/lbw_logreg.ipynb",
+          "status": "passed",
+          "source_sha256": "da011e4ba14e959c6f463e5b5b12180ed50938e7405cb3b3b3eb2caf95ce14c6",
+          "elapsed_seconds": 13.9
+        },
+        {
+          "notebook": "ml/notebooks/modeling/lbw_random_forest.ipynb",
+          "status": "passed",
+          "source_sha256": "43c05e636e7b068fe5f4cef6d7c02e00b25dc59c71778baf9d8b6b16376842eb",
+          "elapsed_seconds": 286.6
+        },
+        {
+          "notebook": "ml/notebooks/modeling/model_comparison.ipynb",
+          "status": "passed",
+          "source_sha256": "3047f2f04f179ec7b8e7e3be4bd9e6c7563291aec718721e86e8c456e080daee",
+          "elapsed_seconds": 6.4
+        },
+        {
+          "notebook": "ml/notebooks/modeling/perinatal_gradient_boosting.ipynb",
+          "status": "passed",
+          "source_sha256": "56359a6bfd2af3afe6d07af88e024da57e9e9c7da649e6153f1f8e068712e281",
+          "elapsed_seconds": 68.9
+        },
+        {
+          "notebook": "ml/notebooks/modeling/perinatal_logreg.ipynb",
+          "status": "passed",
+          "source_sha256": "36ff619467e6051b1ea7ca1be8bdffc1fcf94b5179ad7262f2ba6ac13eebb38b",
+          "elapsed_seconds": 19.8
+        },
+        {
+          "notebook": "ml/notebooks/modeling/perinatal_random_forest.ipynb",
+          "status": "passed",
+          "source_sha256": "8431ced9fe13e9aba956315785a50d93d60a9f605d6f5be3d6689d71925b8a14",
+          "elapsed_seconds": 485.1
+        },
+        {
+          "notebook": "ml/notebooks/modeling/validation_shap.ipynb",
+          "status": "passed",
+          "source_sha256": "a19f419128e949412fbdb8e8b7fb095adc220d53c30afe83e5d83518ea6a97ab",
+          "elapsed_seconds": 29.2
+        },
+        {
+          "notebook": "ml/notebooks/pooled/correlation_features.ipynb",
+          "status": "passed",
+          "source_sha256": "0c031529a7404de0831327a5b22aa874dd8929f8006a0f55223695c6c5b55634",
+          "elapsed_seconds": 48.0
+        },
+        {
+          "notebook": "ml/notebooks/tanzania/eda_lbw.ipynb",
+          "status": "passed",
+          "source_sha256": "82074a39eb4c17042f9cef5ca2c8b307f5c286a5d913fe2a5cb72476121820df",
+          "elapsed_seconds": 17.4
+        },
+        {
+          "notebook": "ml/notebooks/tanzania/eda_perinatal.ipynb",
+          "status": "passed",
+          "source_sha256": "b7ae2254c3aea073666618b3a0d817f800442e2c463948c02a085bf206201217",
+          "elapsed_seconds": 15.0
+        },
+        {
+          "notebook": "ml/notebooks/tanzania/eda_perinatal_anc.ipynb",
+          "status": "passed",
+          "source_sha256": "db4c4fc3cc6b2ed9e3a6b70462b25526ac10fe8300c9b803b8531b0255917e49",
+          "elapsed_seconds": 14.2
+        }
+      ]
+    },
+    {
+      "sklearn_version": "1.5.2",
+      "python_version": "3.12.16",
+      "dependencies": {
+        "numpy": "2.1.1",
+        "pandas": "2.2.3",
+        "scipy": "1.18.1",
+        "joblib": "1.4.2",
+        "threadpoolctl": "3.8.0",
+        "matplotlib": "3.9.2",
+        "seaborn": "0.13.2",
+        "nbclient": "0.11.0",
+        "nbformat": "5.11.1",
+        "nbconvert": "7.17.2",
+        "ipykernel": "7.4.0",
+        "PyYAML": "6.0.2"
+      },
+      "feature_context": "Original notebook research predictors; not the antenatal_history_v1 serving profile.",
+      "cv_scoring": "Unweighted average precision on five cluster-grouped training folds.",
+      "models": [
+        {
+          "notebook": "perinatal_logreg",
+          "cohort": "perinatal",
+          "algorithm": "logistic_regression",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "interval_imputed"
+          ],
+          "train_rows": 24613,
+          "test_rows": 6189,
+          "train_events": 869,
+          "test_events": 220,
+          "train_clusters": 1854,
+          "test_clusters": 465,
+          "split_sha256": "1c01fce9a130d776fa11541e1a9b9d7c2dd4df7c75e2d10c8d1cf6b712fd773d",
+          "cv_pr_auc_folds": [
+            0.06639390420030114,
+            0.1012924892833505,
+            0.06990821996764066,
+            0.0828140778136461,
+            0.076267728051442
+          ],
+          "cv_pr_auc_mean": 0.07933528386327607,
+          "cv_pr_auc_std": 0.01232866267801052,
+          "parameters": {
+            "classifier__C": 10
+          },
+          "test_pr_auc": 0.07225642352973452,
+          "test_roc_auc": 0.5988756301497129,
+          "model": {
+            "tp": 129,
+            "fp": 2679,
+            "tn": 3290,
+            "fn": 91,
+            "flagged": 2808,
+            "recall": 0.5863636363636363,
+            "precision": 0.045940170940170943,
+            "specificity": 0.5511811023622047
+          },
+          "checklist": {
+            "tp": 115,
+            "fp": 2693,
+            "tn": 3276,
+            "fn": 105,
+            "flagged": 2808,
+            "recall": 0.5227272727272727,
+            "precision": 0.04095441595441596,
+            "specificity": 0.5488356508627911
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 129,
+            "possible_tp_max": 129
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.013783863909848062,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "perinatal_random_forest",
+          "cohort": "perinatal",
+          "algorithm": "random_forest",
+          "features": [
+            "interval_imputed",
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple"
+          ],
+          "train_rows": 24613,
+          "test_rows": 6189,
+          "train_events": 869,
+          "test_events": 220,
+          "train_clusters": 1854,
+          "test_clusters": 465,
+          "split_sha256": "1c01fce9a130d776fa11541e1a9b9d7c2dd4df7c75e2d10c8d1cf6b712fd773d",
+          "cv_pr_auc_folds": [
+            0.0748870557084569,
+            0.0947206050876551,
+            0.06835781608677632,
+            0.07968397876622645,
+            0.0682853399242577
+          ],
+          "cv_pr_auc_mean": 0.0771869591146745,
+          "cv_pr_auc_std": 0.009758544919630862,
+          "parameters": {
+            "model__max_depth": 5,
+            "model__max_features": "sqrt",
+            "model__min_samples_leaf": 150
+          },
+          "test_pr_auc": 0.0716772038258089,
+          "test_roc_auc": 0.6011026668088152,
+          "model": {
+            "tp": 130,
+            "fp": 2678,
+            "tn": 3291,
+            "fn": 90,
+            "flagged": 2808,
+            "recall": 0.5909090909090909,
+            "precision": 0.046296296296296294,
+            "specificity": 0.5513486346121629
+          },
+          "checklist": {
+            "tp": 115,
+            "fp": 2693,
+            "tn": 3276,
+            "fn": 105,
+            "flagged": 2808,
+            "recall": 0.5227272727272727,
+            "precision": 0.04095441595441596,
+            "specificity": 0.5488356508627911
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 130,
+            "possible_tp_max": 130
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.010910384900889915,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "perinatal_gradient_boosting",
+          "cohort": "perinatal",
+          "algorithm": "gradient_boosting",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "preceding_interval_m",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "multiple",
+            "interval_imputed"
+          ],
+          "train_rows": 24613,
+          "test_rows": 6189,
+          "train_events": 869,
+          "test_events": 220,
+          "train_clusters": 1854,
+          "test_clusters": 465,
+          "split_sha256": "1c01fce9a130d776fa11541e1a9b9d7c2dd4df7c75e2d10c8d1cf6b712fd773d",
+          "cv_pr_auc_folds": [
+            0.06958391938865002,
+            0.0985125950815163,
+            0.07878801905560329,
+            0.07978520276202068,
+            0.08132931910392391
+          ],
+          "cv_pr_auc_mean": 0.08159981107834284,
+          "cv_pr_auc_std": 0.00939889418458854,
+          "parameters": {
+            "l2_regularization": 1.0,
+            "learning_rate": 0.05,
+            "max_iter": 50,
+            "max_leaf_nodes": 4,
+            "min_samples_leaf": 150
+          },
+          "test_pr_auc": 0.07424033444113373,
+          "test_roc_auc": 0.6064183889489636,
+          "model": {
+            "tp": 130,
+            "fp": 2678,
+            "tn": 3291,
+            "fn": 90,
+            "flagged": 2808,
+            "recall": 0.5909090909090909,
+            "precision": 0.046296296296296294,
+            "specificity": 0.5513486346121629
+          },
+          "checklist": {
+            "tp": 115,
+            "fp": 2693,
+            "tn": 3276,
+            "fn": 105,
+            "flagged": 2808,
+            "recall": 0.5227272727272727,
+            "precision": 0.04095441595441596,
+            "specificity": 0.5488356508627911
+          },
+          "cutoff_ties": {
+            "rows": 122,
+            "slots": 101,
+            "possible_tp_min": 127,
+            "possible_tp_max": 130
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.010508283155033717,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "lbw_logreg",
+          "cohort": "lbw",
+          "algorithm": "logistic_regression",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "interval_imputed",
+            "multiple",
+            "education",
+            "no_anc",
+            "anc4plus"
+          ],
+          "train_rows": 7076,
+          "test_rows": 1849,
+          "train_events": 581,
+          "test_events": 130,
+          "train_clusters": 1724,
+          "test_clusters": 430,
+          "split_sha256": "4cd39cea27aa23004f949ff2e0e398a1e5ae14a502335593b4aa85c08e6de00a",
+          "cv_pr_auc_folds": [
+            0.19844794497408202,
+            0.1739646997159231,
+            0.2004309454797961,
+            0.21089704550403196,
+            0.18300057428079697
+          ],
+          "cv_pr_auc_mean": 0.19334824199092604,
+          "cv_pr_auc_std": 0.013167597367290167,
+          "parameters": {
+            "clf__C": 0.001
+          },
+          "test_pr_auc": 0.142923333749954,
+          "test_roc_auc": 0.6126706045554213,
+          "model": {
+            "tp": 76,
+            "fp": 694,
+            "tn": 1025,
+            "fn": 54,
+            "flagged": 770,
+            "recall": 0.5846153846153846,
+            "precision": 0.0987012987012987,
+            "specificity": 0.5962769051774287
+          },
+          "checklist": {
+            "tp": 69,
+            "fp": 701,
+            "tn": 1018,
+            "fn": 61,
+            "flagged": 770,
+            "recall": 0.5307692307692308,
+            "precision": 0.08961038961038961,
+            "specificity": 0.5922047702152414
+          },
+          "cutoff_ties": {
+            "rows": 2,
+            "slots": 1,
+            "possible_tp_min": 76,
+            "possible_tp_max": 76
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.01472182140680404,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "lbw_random_forest",
+          "cohort": "lbw",
+          "algorithm": "random_forest",
+          "features": [
+            "interval_imputed",
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "education",
+            "no_anc",
+            "anc4plus"
+          ],
+          "train_rows": 7076,
+          "test_rows": 1849,
+          "train_events": 581,
+          "test_events": 130,
+          "train_clusters": 1724,
+          "test_clusters": 430,
+          "split_sha256": "4cd39cea27aa23004f949ff2e0e398a1e5ae14a502335593b4aa85c08e6de00a",
+          "cv_pr_auc_folds": [
+            0.2209207838249721,
+            0.18960385512540615,
+            0.17968169477722018,
+            0.2119720709681157,
+            0.20502689101779864
+          ],
+          "cv_pr_auc_mean": 0.20144105914270255,
+          "cv_pr_auc_std": 0.014945296320497566,
+          "parameters": {
+            "model__max_depth": null,
+            "model__max_features": "sqrt",
+            "model__min_samples_leaf": 10
+          },
+          "test_pr_auc": 0.12936724370788602,
+          "test_roc_auc": 0.6186356110439879,
+          "model": {
+            "tp": 74,
+            "fp": 696,
+            "tn": 1023,
+            "fn": 56,
+            "flagged": 770,
+            "recall": 0.5692307692307692,
+            "precision": 0.09610389610389611,
+            "specificity": 0.5951134380453752
+          },
+          "checklist": {
+            "tp": 69,
+            "fp": 701,
+            "tn": 1018,
+            "fn": 61,
+            "flagged": 770,
+            "recall": 0.5307692307692308,
+            "precision": 0.08961038961038961,
+            "specificity": 0.5922047702152414
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 74,
+            "possible_tp_max": 74
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.016709349258255023,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "lbw_gradient_boosting",
+          "cohort": "lbw",
+          "algorithm": "gradient_boosting",
+          "features": [
+            "interval_imputed",
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "education",
+            "no_anc",
+            "anc4plus"
+          ],
+          "train_rows": 7076,
+          "test_rows": 1849,
+          "train_events": 581,
+          "test_events": 130,
+          "train_clusters": 1724,
+          "test_clusters": 430,
+          "split_sha256": "4cd39cea27aa23004f949ff2e0e398a1e5ae14a502335593b4aa85c08e6de00a",
+          "cv_pr_auc_folds": [
+            0.210108391564084,
+            0.17032773786153393,
+            0.2062919302736524,
+            0.20851523918181225,
+            0.20032834296073124
+          ],
+          "cv_pr_auc_mean": 0.19911432836836276,
+          "cv_pr_auc_std": 0.014770958961577901,
+          "parameters": {
+            "model__l2_regularization": 5.0,
+            "model__learning_rate": 0.05,
+            "model__max_iter": 100,
+            "model__max_leaf_nodes": 7,
+            "model__min_samples_leaf": 20
+          },
+          "test_pr_auc": 0.15897811649962357,
+          "test_roc_auc": 0.6182306349845617,
+          "model": {
+            "tp": 73,
+            "fp": 697,
+            "tn": 1022,
+            "fn": 57,
+            "flagged": 770,
+            "recall": 0.5615384615384615,
+            "precision": 0.09480519480519481,
+            "specificity": 0.5945317044793484
+          },
+          "checklist": {
+            "tp": 69,
+            "fp": 701,
+            "tn": 1018,
+            "fn": 61,
+            "flagged": 770,
+            "recall": 0.5307692307692308,
+            "precision": 0.08961038961038961,
+            "specificity": 0.5922047702152414
+          },
+          "cutoff_ties": {
+            "rows": 22,
+            "slots": 8,
+            "possible_tp_min": 72,
+            "possible_tp_max": 74
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.016514434165473945,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "anc_logreg",
+          "cohort": "perinatal_anc",
+          "algorithm": "logistic_regression",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "interval_imputed",
+            "no_anc",
+            "anc4plus",
+            "urine_tested",
+            "iron_tablets"
+          ],
+          "train_rows": 13232,
+          "test_rows": 3310,
+          "train_events": 412,
+          "test_events": 108,
+          "train_clusters": 1847,
+          "test_clusters": 461,
+          "split_sha256": "7114372a2bffbbd429b5106cb2cbd5cfa55fe4f33194f962430f0c934f589b46",
+          "cv_pr_auc_folds": [
+            0.11431619407427052,
+            0.07998463088676921,
+            0.059142677781862274,
+            0.06076001929245107,
+            0.09445734089714825
+          ],
+          "cv_pr_auc_mean": 0.08173217258650026,
+          "cv_pr_auc_std": 0.020865372060713212,
+          "parameters": {
+            "classifier__C": 0.1
+          },
+          "test_pr_auc": 0.08492154130590385,
+          "test_roc_auc": 0.6323622967127027,
+          "model": {
+            "tp": 66,
+            "fp": 1391,
+            "tn": 1811,
+            "fn": 42,
+            "flagged": 1457,
+            "recall": 0.6111111111111112,
+            "precision": 0.045298558682223745,
+            "specificity": 0.5655840099937539
+          },
+          "checklist": {
+            "tp": 49,
+            "fp": 1408,
+            "tn": 1794,
+            "fn": 59,
+            "flagged": 1457,
+            "recall": 0.4537037037037037,
+            "precision": 0.033630748112560054,
+            "specificity": 0.5602748282323547
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 66,
+            "possible_tp_max": 66
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.023328195151789802,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "anc_random_forest",
+          "cohort": "perinatal_anc",
+          "algorithm": "random_forest",
+          "features": [
+            "maternal_age",
+            "prior_live_births",
+            "preceding_interval_m",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "multiple",
+            "no_anc",
+            "anc4plus",
+            "urine_tested",
+            "iron_tablets"
+          ],
+          "train_rows": 13232,
+          "test_rows": 3310,
+          "train_events": 412,
+          "test_events": 108,
+          "train_clusters": 1847,
+          "test_clusters": 461,
+          "split_sha256": "7114372a2bffbbd429b5106cb2cbd5cfa55fe4f33194f962430f0c934f589b46",
+          "cv_pr_auc_folds": [
+            0.11472614390185569,
+            0.05866593324589069,
+            0.06290471080549435,
+            0.04606843077411969,
+            0.058440239159180604
+          ],
+          "cv_pr_auc_mean": 0.06816109157730821,
+          "cv_pr_auc_std": 0.02395275475449363,
+          "parameters": {
+            "n_estimators": 400,
+            "max_depth": 12,
+            "min_samples_leaf": 20
+          },
+          "test_pr_auc": 0.08869404152982237,
+          "test_roc_auc": 0.6279813542461887,
+          "model": {
+            "tp": 66,
+            "fp": 1391,
+            "tn": 1811,
+            "fn": 42,
+            "flagged": 1457,
+            "recall": 0.6111111111111112,
+            "precision": 0.045298558682223745,
+            "specificity": 0.5655840099937539
+          },
+          "checklist": {
+            "tp": 49,
+            "fp": 1408,
+            "tn": 1794,
+            "fn": 59,
+            "flagged": 1457,
+            "recall": 0.4537037037037037,
+            "precision": 0.033630748112560054,
+            "specificity": 0.5602748282323547
+          },
+          "cutoff_ties": {
+            "rows": 1,
+            "slots": 1,
+            "possible_tp_min": 66,
+            "possible_tp_max": 66
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.026779993939714523,
+          "cv_scoring": "unweighted average precision"
+        },
+        {
+          "notebook": "anc_gradient_boosting",
+          "cohort": "perinatal_anc",
+          "algorithm": "gradient_boosting",
+          "features": [
+            "interval_imputed",
+            "maternal_age",
+            "prior_live_births",
+            "first_pregnancy",
+            "prior_stillbirth",
+            "prior_loss",
+            "preceding_interval_m",
+            "multiple",
+            "no_anc",
+            "anc4plus",
+            "urine_tested",
+            "iron_tablets"
+          ],
+          "train_rows": 13232,
+          "test_rows": 3310,
+          "train_events": 412,
+          "test_events": 108,
+          "train_clusters": 1847,
+          "test_clusters": 461,
+          "split_sha256": "7114372a2bffbbd429b5106cb2cbd5cfa55fe4f33194f962430f0c934f589b46",
+          "cv_pr_auc_folds": [
+            0.1267941894609672,
+            0.06807119367065595,
+            0.07375293643622668,
+            0.055959710448217306,
+            0.07254498369323131
+          ],
+          "cv_pr_auc_mean": 0.0794246027418597,
+          "cv_pr_auc_std": 0.02450663490063897,
+          "parameters": {
+            "model__l2_regularization": 1.0,
+            "model__learning_rate": 0.05,
+            "model__max_iter": 50,
+            "model__max_leaf_nodes": 4,
+            "model__min_samples_leaf": 80
+          },
+          "test_pr_auc": 0.07863073822459546,
+          "test_roc_auc": 0.6217786337242927,
+          "model": {
+            "tp": 63,
+            "fp": 1394,
+            "tn": 1808,
+            "fn": 45,
+            "flagged": 1457,
+            "recall": 0.5833333333333334,
+            "precision": 0.043239533287577216,
+            "specificity": 0.5646470955652717
+          },
+          "checklist": {
+            "tp": 49,
+            "fp": 1408,
+            "tn": 1794,
+            "fn": 59,
+            "flagged": 1457,
+            "recall": 0.4537037037037037,
+            "precision": 0.033630748112560054,
+            "specificity": 0.5602748282323547
+          },
+          "cutoff_ties": {
+            "rows": 490,
+            "slots": 182,
+            "possible_tp_min": 60,
+            "possible_tp_max": 74
+          },
+          "evaluation_rule": "Same held-out flag count as the historical checklist; stable tie order.",
+          "calibrated": false,
+          "cv_pr_auc_sample_std": 0.02739925076879877,
+          "cv_scoring": "unweighted average precision"
+        }
+      ],
+      "execution": [
+        {
+          "notebook": "ml/notebooks/kenya/eda_lbw.ipynb",
+          "status": "passed",
+          "source_sha256": "db1f238d82dc2c4c84c838495f9448717e770b81f30c26727a667c0ac17d2e2b",
+          "elapsed_seconds": 12.6
+        },
+        {
+          "notebook": "ml/notebooks/kenya/eda_perinatal.ipynb",
+          "status": "passed",
+          "source_sha256": "cf278782effec94a69a7754fbae8037409e619cfd244d3463862d7e0da4bbfa4",
+          "elapsed_seconds": 13.3
+        },
+        {
+          "notebook": "ml/notebooks/kenya/eda_perinatal_anc.ipynb",
+          "status": "passed",
+          "source_sha256": "6d56a9107e2ba7ddfb08dc29f05788bf68d073b5444362d978e020779276f493",
+          "elapsed_seconds": 3.9
+        },
+        {
+          "notebook": "ml/notebooks/modeling/anc_gradient_boosting.ipynb",
+          "status": "passed",
+          "source_sha256": "d7f959dd0a6e30b1e98235f7d3bc6403d254c1c439100d8f35a67e602806e83f",
+          "elapsed_seconds": 72.2
+        },
+        {
+          "notebook": "ml/notebooks/modeling/anc_logreg.ipynb",
+          "status": "passed",
+          "source_sha256": "4fd16745ff5ffbb6973f9851e150c88bd7c2262f87147ea84d4e24cdecc714eb",
+          "elapsed_seconds": 26.5
+        },
+        {
+          "notebook": "ml/notebooks/modeling/anc_random_forest.ipynb",
+          "status": "passed",
+          "source_sha256": "71bc9888ce8af7f299bf842aeca370c1859a2a15a295c4009f0d4765f851f6a9",
+          "elapsed_seconds": 140.1
+        },
+        {
+          "notebook": "ml/notebooks/modeling/checklist_baseline.ipynb",
+          "status": "passed",
+          "source_sha256": "33d6f1344dbd4f839b9cc3510b4c1d83f9a02aa68d7d0c08ce3d40518112b7d6",
+          "elapsed_seconds": 6.1
+        },
+        {
+          "notebook": "ml/notebooks/modeling/lbw_gradient_boosting.ipynb",
+          "status": "passed",
+          "source_sha256": "f03b909c8f1109f120e8a93699082a918d0d5bd7cabf49ab391e1a864a942c2e",
+          "elapsed_seconds": 96.8
+        },
+        {
+          "notebook": "ml/notebooks/modeling/lbw_logreg.ipynb",
+          "status": "passed",
+          "source_sha256": "da011e4ba14e959c6f463e5b5b12180ed50938e7405cb3b3b3eb2caf95ce14c6",
+          "elapsed_seconds": 19.3
+        },
+        {
+          "notebook": "ml/notebooks/modeling/lbw_random_forest.ipynb",
+          "status": "passed",
+          "source_sha256": "43c05e636e7b068fe5f4cef6d7c02e00b25dc59c71778baf9d8b6b16376842eb",
+          "elapsed_seconds": 310.9
+        },
+        {
+          "notebook": "ml/notebooks/modeling/perinatal_gradient_boosting.ipynb",
+          "status": "passed",
+          "source_sha256": "56359a6bfd2af3afe6d07af88e024da57e9e9c7da649e6153f1f8e068712e281",
+          "elapsed_seconds": 63.4
+        },
+        {
+          "notebook": "ml/notebooks/modeling/perinatal_logreg.ipynb",
+          "status": "passed",
+          "source_sha256": "36ff619467e6051b1ea7ca1be8bdffc1fcf94b5179ad7262f2ba6ac13eebb38b",
+          "elapsed_seconds": 26.5
+        },
+        {
+          "notebook": "ml/notebooks/modeling/perinatal_random_forest.ipynb",
+          "status": "passed",
+          "source_sha256": "8431ced9fe13e9aba956315785a50d93d60a9f605d6f5be3d6689d71925b8a14",
+          "elapsed_seconds": 442.6
+        },
+        {
+          "notebook": "ml/notebooks/pooled/correlation_features.ipynb",
+          "status": "passed",
+          "source_sha256": "0c031529a7404de0831327a5b22aa874dd8929f8006a0f55223695c6c5b55634",
+          "elapsed_seconds": 18.0
+        },
+        {
+          "notebook": "ml/notebooks/tanzania/eda_lbw.ipynb",
+          "status": "passed",
+          "source_sha256": "82074a39eb4c17042f9cef5ca2c8b307f5c286a5d913fe2a5cb72476121820df",
+          "elapsed_seconds": 7.4
+        },
+        {
+          "notebook": "ml/notebooks/tanzania/eda_perinatal.ipynb",
+          "status": "passed",
+          "source_sha256": "b7ae2254c3aea073666618b3a0d817f800442e2c463948c02a085bf206201217",
+          "elapsed_seconds": 9.1
+        },
+        {
+          "notebook": "ml/notebooks/tanzania/eda_perinatal_anc.ipynb",
+          "status": "passed",
+          "source_sha256": "db4c4fc3cc6b2ed9e3a6b70462b25526ac10fe8300c9b803b8531b0255917e49",
+          "elapsed_seconds": 7.8
+        }
+      ]
+    }
+  ],
+  "repairs": [
+    "Portable Kenya perinatal EDA data path.",
+    "Restore EDA-only columns in pooled analysis without changing predictors.",
+    "Explicitly separate balanced fitting weights from unweighted GB validation scoring."
+  ],
+  "diagnostic": {
+    "anc_rf_1_5_2_test_ap": 0.08869404152982237,
+    "anc_rf_1_9_1_test_ap": 0.09185807536911589,
+    "perinatal_gb_1_9_1_cv_ap_before_explicit_scoring": 0.6531231920008046
+  },
+  "recommended_research_selection": {
+    "perinatal": {
+      "algorithm": "logistic_regression",
+      "reason": "Parsimony choice among close CV means; not the numerical CV winner."
+    },
+    "lbw": {
+      "algorithm": "gradient_boosting",
+      "reason": "Highest mean unweighted training CV AP on current 1.9.1 stack."
+    },
+    "perinatal_anc": {
+      "algorithm": "logistic_regression",
+      "reason": "Highest mean unweighted training CV AP on current 1.9.1 stack."
+    }
+  }
+}

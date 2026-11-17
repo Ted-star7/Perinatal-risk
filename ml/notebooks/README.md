@@ -4,6 +4,39 @@ Split by country so two people never edit the same file. Each EDA notebook is
 owned by one person. Keep outputs cleared before committing (they bloat diffs
 and can leak data).
 
+## Execution environments
+
+Use Python 3.12 and the pinned current notebook environment:
+
+```bash
+python3.12 -m venv .venv-notebooks
+.venv-notebooks/bin/pip install -r ml/requirements-notebooks.txt
+.venv-notebooks/bin/python -m ipykernel install --user --name perinatal-notebooks --display-name "Perinatal notebooks (sklearn 1.9.1)"
+```
+
+Select that kernel for all 19 notebooks. The numerical stack matches the
+antenatal training and serving environment. The perinatal GB grid search now
+explicitly balances fitting while keeping validation AP and ROC-AUC unweighted,
+consistent with the other eight algorithms. This prevents automatic weight
+forwarding from changing the meaning of its CV scores in newer sklearn versions.
+
+For an older-result reproduction only, create a separate `.venv-research` and
+install `ml/requirements-research-legacy.txt` (scikit-learn 1.5.2). That environment
+supports the six country EDA notebooks, pooled analysis, checklist baseline and
+nine original algorithm notebooks. Do not use it to load the API's 1.9.1 joblib
+files in `model_comparison` or `validation_shap`.
+
+Do not mix results between versions. With identical source, data and split,
+ANC Random Forest produced test AP 0.088694 under 1.5.2 and 0.091858 under 1.9.1.
+Other forest results and selected configurations change too. The audit report
+records both versions, with the current stack as the main comparison.
+
+Record library versions, source commit, data hashes and decision rule with any
+new publication. Run each notebook from its own directory in a fresh kernel,
+with all `SAVE_TO_DB` / `SAVE_METRICS` flags off during review. Executed copies
+belong under ignored `ml/notebook-runs/`; they can contain licensed survey rows
+and must not be committed or shared publicly.
+
 ## EDA — one notebook per person
 
 ```

@@ -1,8 +1,13 @@
+# Antenatal training/release environment, matching backend model serving.
+# Notebook execution: requirements-notebooks.txt pins the complete audit stack.
 pandas==2.2.3
 numpy==2.1.1
+scipy==1.18.1
+threadpoolctl==3.8.0
 scikit-learn==1.9.1
 shap==0.46.0
 matplotlib==3.9.2
+seaborn==0.13.2
 pyreadstat==1.2.7        # reads DHS .DTA / .SAV recode files
 sqlalchemy==2.0.35
 psycopg[binary]==3.2.3

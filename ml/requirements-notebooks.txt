@@ -1,0 +1,15 @@
+# Python 3.12: reproducible environment for all current notebooks.
+# Matches the numerical stack used by antenatal training and serving.
+numpy==2.1.1
+pandas==2.2.3
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.4.2
+threadpoolctl==3.8.0
+PyYAML==6.0.2
+matplotlib==3.9.2
+seaborn==0.13.2
+ipykernel==7.4.0
+nbclient==0.11.0
+nbformat==5.11.1
+nbconvert==7.17.2
