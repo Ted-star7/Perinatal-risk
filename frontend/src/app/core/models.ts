@@ -82,6 +82,8 @@ export interface PredictResponse {
   created_at: string;
   patient_ref?: string;
   assessment?: AssessmentResult | null;
+  outcomes?: BirthOutcome[];
+  multiple?: boolean;
 }
 
 /** One model's result from the shared /metrics store (one row per cohort+algorithm). */
@@ -95,4 +97,21 @@ export interface MetricsRow {
   is_best: boolean;
   test_events: number;
   updated_at: string;
+}
+
+export interface BirthOutcomeInput {
+  baby_number: number;
+  expected_version: number;
+  birth_date: string | null;
+  observed_on: string;
+  status: 'unknown' | 'alive' | 'stillbirth' | 'died';
+  death_age_days: number | null;
+  birth_weight_grams: number | null;
+  source: string;
+  notes: string;
+}
+export interface BirthOutcome extends BirthOutcomeInput {
+  version: number;
+  doctor_id: number;
+  recorded_at: string;
 }

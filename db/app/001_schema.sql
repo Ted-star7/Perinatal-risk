@@ -1,4 +1,4 @@
--- App DB. The backend (SQLAlchemy) owns clinics, doctors and predictions and
+-- App DB. The backend (SQLAlchemy) owns clinics, doctors, predictions and birth_outcomes and
 -- creates them on startup. This file seeds only the tables the modeling side
 -- writes and the eval dashboard reads.
 

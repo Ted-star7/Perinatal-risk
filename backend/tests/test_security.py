@@ -120,6 +120,110 @@ class AccessTests(unittest.TestCase):
                 422,
             )
 
+    def test_birth_followup_is_scoped_versioned_and_does_not_change_prediction(self):
+        from app.models import Prediction
+        from app.seed_followups import seed_followups
+
+        self.assertEqual(seed_followups(self.session["doctor_id"]), 3)
+        self.assertEqual(seed_followups(self.session["doctor_id"]), 0)
+        rows = self.client.get("/history", headers=self.headers).json()
+        row = next(r for r in rows if r["patient_ref"] == "DEMO-FOLLOWUP-1")
+        url = f"/predictions/{row['id']}/outcomes"
+        self.assertEqual(len(row["outcomes"]), 1)
+        before = row["outcomes"][0]
+        body = {
+            key: before[key]
+            for key in [
+                "baby_number",
+                "birth_date",
+                "observed_on",
+                "status",
+                "death_age_days",
+                "birth_weight_grams",
+                "source",
+                "notes",
+            ]
+        } | {"expected_version": 1, "notes": "Follow-up and referral reviewed."}
+        self.assertEqual(self.client.post(url, json=body).status_code, 401)
+        saved = self.client.post(url, json=body, headers=self.headers)
+        self.assertEqual(saved.status_code, 200, saved.text)
+        self.assertEqual(saved.json()["version"], 2)
+        self.assertEqual(self.client.post(url, json=body, headers=self.headers).status_code, 409)
+        self.assertEqual(
+            self.client.post(
+                url, json=body | {"baby_number": 2, "expected_version": 0}, headers=self.headers
+            ).status_code,
+            422,
+        )
+        revisions = self.client.get(url, headers=self.headers).json()
+        self.assertEqual([r["version"] for r in revisions], [2, 1])
+        self.assertEqual(revisions[1]["notes"], before["notes"])
+        self.assertEqual(revisions[0]["doctor_id"], self.session["doctor_id"])
+        refreshed = self.client.get("/history", headers=self.headers).json()
+        latest = next(r for r in refreshed if r["id"] == row["id"])
+        self.assertEqual(latest["outcomes"][0]["version"], 2)
+        self.assertEqual(latest["recommendation"], row["recommendation"])
+        self.assertEqual(latest["risk"], row["risk"])
+        other = self.client.post(
+            "/clinics/register",
+            json={
+                "clinic_name": "Other clinic",
+                "doctor_name": "Other clinician",
+                "email": f"{uuid4()}@example.com",
+                "password": "test66",
+            },
+        ).json()
+        other_headers = {"Authorization": f"Bearer {other['token']}"}
+        self.assertEqual(self.client.get(url, headers=other_headers).status_code, 404)
+        self.assertEqual(self.client.post(url, json=body, headers=other_headers).status_code, 404)
+        with SessionLocal() as db:
+            prediction = db.get(Prediction, row["id"])
+            prediction.inputs = prediction.inputs | {"multiple": True}
+            db.commit()
+        twin = self.client.post(
+            url,
+            json=body | {"baby_number": 2, "expected_version": 0, "birth_weight_grams": 2400},
+            headers=self.headers,
+        )
+        self.assertEqual(twin.status_code, 200, twin.text)
+        latest = next(
+            r
+            for r in self.client.get("/history", headers=self.headers).json()
+            if r["id"] == row["id"]
+        )
+        self.assertEqual({o["baby_number"] for o in latest["outcomes"]}, {1, 2})
+
+    def test_outcome_dates_and_unknowns_are_validated(self):
+        from datetime import datetime, timedelta, timezone
+
+        from app.schemas import BirthOutcomeIn
+
+        today = datetime.now(timezone.utc).date()
+        body = {
+            "baby_number": 1,
+            "expected_version": 0,
+            "observed_on": today,
+            "status": "unknown",
+            "source": "Mother’s report",
+        }
+        self.assertIsNone(BirthOutcomeIn(**body).birth_weight_grams)
+        for update in [
+            {"source": "  "},
+            {"status": "alive"},
+            {"observed_on": today + timedelta(days=1)},
+            {"birth_date": today + timedelta(days=1)},
+            {"birth_weight_grams": -1},
+            {"status": "died", "birth_date": today},
+            {"status": "died", "birth_date": today, "death_age_days": 1},
+            {"death_age_days": 0},
+        ]:
+            with self.assertRaises(ValueError):
+                BirthOutcomeIn(**(body | update))
+        death = BirthOutcomeIn(
+            **(body | {"birth_date": today, "status": "died", "death_age_days": 0})
+        )
+        self.assertEqual(death.death_age_days, 0)
+
     def test_save_uses_the_reviewed_snapshot_after_model_change(self):
         outcome = OutcomeResult(
             status="available",

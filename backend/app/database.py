@@ -65,6 +65,9 @@ def init_db() -> None:
             if engine.dialect.name == "postgresql":
                 con.execute(text("ALTER TABLE clinics ALTER COLUMN country TYPE VARCHAR(80)"))
             con.execute(text("INSERT INTO schema_migrations(version) VALUES (4)"))
+        if not con.scalar(text("SELECT version FROM schema_migrations WHERE version = 5")):
+            # Base.metadata.create_all creates the additive, append-only birth_outcomes table.
+            con.execute(text("INSERT INTO schema_migrations(version) VALUES (5)"))
         for statement in filter(str.strip, METRICS_DDL.split(";")):
             con.execute(text(statement))
         # Historical duplicate flags are resolved deterministically before the unique index.

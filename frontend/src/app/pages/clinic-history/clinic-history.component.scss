@@ -43,3 +43,16 @@ details p, details li, .legacy { color: var(--text-secondary); font-size: 12px; 
   dl { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   h1 { font-size: 30px; }
 }
+
+.follow-up { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 18px; }
+.follow-up h3 { font-size: 15px; }
+.follow-up p { font-size: 12px; line-height: 1.7; color: var(--text-secondary); }
+.outcome-summary { padding: 14px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.outcome-summary strong { font-size: 13px; }
+.clinical-notes { white-space: pre-wrap; }
+.follow-up-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.outcome-form fieldset { margin: 20px 0 0; padding: 0; border: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.outcome-form label { display: flex; flex-direction: column; gap: 8px; font-size: 12px; min-width: 0; }
+.outcome-form input, .outcome-form select, .outcome-form textarea { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid var(--border-strong); border-radius: 8px; padding: 12px; background: var(--surface-2); color: var(--text-primary); font: inherit; min-height: 44px; }
+.outcome-form .wide { grid-column: 1 / -1; }
+@media(max-width: 600px) { .outcome-form fieldset { grid-template-columns: minmax(0, 1fr); } .outcome-form input, .outcome-form select, .outcome-form textarea { font-size: 16px; } }

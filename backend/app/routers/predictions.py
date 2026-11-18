@@ -16,8 +16,15 @@ from sqlalchemy.orm import Session
 from app.auth import current_doctor
 from app.config import settings
 from app.database import get_db
-from app.models import Prediction
-from app.schemas import AssessmentResult, Driver, PredictRequest, PredictResponse
+from app.models import BirthOutcome, Prediction
+from app.schemas import (
+    AssessmentResult,
+    BirthOutcomeIn,
+    BirthOutcomeResponse,
+    Driver,
+    PredictRequest,
+    PredictResponse,
+)
 from app.scoring import AssessmentInputError, ModelUnavailable, score
 
 router = APIRouter(tags=["predictions"])
@@ -44,7 +51,7 @@ def _existing(db: Session, clinic_id: int, request_id: str | None):
     )
 
 
-def _to_response(prediction: Prediction) -> PredictResponse:
+def _to_response(prediction: Prediction, outcomes=None) -> PredictResponse:
     created = prediction.created_at.replace(tzinfo=timezone.utc)
     return PredictResponse(
         id=prediction.id,
@@ -55,6 +62,8 @@ def _to_response(prediction: Prediction) -> PredictResponse:
         created_at=created,
         patient_ref=prediction.patient_ref,
         assessment=prediction.assessment,
+        outcomes=outcomes or [],
+        multiple=bool(prediction.inputs.get("multiple")),
     )
 
 
@@ -162,4 +171,94 @@ def history(
     if before:
         query = query.where(Prediction.id < before)
     rows = db.scalars(query.order_by(Prediction.id.desc()).limit(limit)).all()
-    return [_to_response(row) for row in rows]
+    ids = [row.id for row in rows]
+    outcomes = (
+        db.scalars(
+            select(BirthOutcome)
+            .where(BirthOutcome.prediction_id.in_(ids))
+            .order_by(BirthOutcome.version.desc())
+        ).all()
+        if ids
+        else []
+    )
+    latest = {}
+    for outcome in outcomes:
+        latest.setdefault((outcome.prediction_id, outcome.baby_number), _outcome_response(outcome))
+    return [
+        _to_response(row, [value for (pid, _), value in latest.items() if pid == row.id])
+        for row in rows
+    ]
+
+
+def _outcome_response(row: BirthOutcome) -> BirthOutcomeResponse:
+    return BirthOutcomeResponse(
+        **row.details,
+        expected_version=row.version,
+        version=row.version,
+        doctor_id=row.doctor_id,
+        recorded_at=row.recorded_at.replace(tzinfo=timezone.utc),
+    )
+
+
+def _clinic_prediction(db, who, prediction_id):
+    row = db.scalar(
+        select(Prediction).where(
+            Prediction.id == prediction_id, Prediction.clinic_id == who["clinic_id"]
+        )
+    )
+    if row is None:
+        raise HTTPException(404, "Assessment not found.")
+    return row
+
+
+@router.get("/predictions/{prediction_id}/outcomes", response_model=list[BirthOutcomeResponse])
+def outcome_history(
+    prediction_id: int, db: Session = Depends(get_db), who: dict = Depends(current_doctor)
+):
+    _clinic_prediction(db, who, prediction_id)
+    rows = db.scalars(
+        select(BirthOutcome)
+        .where(BirthOutcome.prediction_id == prediction_id)
+        .order_by(BirthOutcome.recorded_at.desc(), BirthOutcome.id.desc())
+    ).all()
+    return [_outcome_response(row) for row in rows]
+
+
+@router.post("/predictions/{prediction_id}/outcomes", response_model=BirthOutcomeResponse)
+def record_outcome(
+    prediction_id: int,
+    body: BirthOutcomeIn,
+    db: Session = Depends(get_db),
+    who: dict = Depends(current_doctor),
+):
+    prediction = _clinic_prediction(db, who, prediction_id)
+    if body.baby_number > 1 and not prediction.inputs.get("multiple"):
+        raise HTTPException(422, "This assessment records a single baby.")
+    latest = db.scalar(
+        select(BirthOutcome)
+        .where(
+            BirthOutcome.prediction_id == prediction_id,
+            BirthOutcome.baby_number == body.baby_number,
+        )
+        .order_by(BirthOutcome.version.desc())
+        .limit(1)
+    )
+    version = latest.version if latest else 0
+    if body.expected_version != version:
+        raise HTTPException(409, "This follow-up changed. Reload the record before editing.")
+    row = BirthOutcome(
+        prediction_id=prediction_id,
+        baby_number=body.baby_number,
+        version=version + 1,
+        doctor_id=who["doctor_id"],
+        details=body.model_dump(mode="json", exclude={"expected_version"}),
+    )
+    db.add(row)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            409, "This follow-up changed. Reload the record before editing."
+        ) from exc
+    return _outcome_response(row)

@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, timeout } from 'rxjs';
 import {
+  BirthOutcome,
+  BirthOutcomeInput,
   LoginBody,
   PredictRequest,
   PredictResponse,
@@ -72,6 +74,14 @@ export class ApiService {
     let params = new HttpParams().set('search', search).set('limit', 25);
     if (before) params = params.set('before', before);
     return this.http.get<PredictResponse[]>(`${API_BASE}/history`, { params });
+  }
+
+  saveOutcome(id: number, body: BirthOutcomeInput): Observable<BirthOutcome> {
+    return this.http.post<BirthOutcome>(`${API_BASE}/predictions/${id}/outcomes`, body);
+  }
+
+  outcomeHistory(id: number): Observable<BirthOutcome[]> {
+    return this.http.get<BirthOutcome[]>(`${API_BASE}/predictions/${id}/outcomes`);
   }
 
   session(): Observable<{ is_owner: boolean }> {

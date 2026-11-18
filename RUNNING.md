@@ -87,11 +87,14 @@ The project uses `@angular/build` for development, production builds and tests.
 means the development server started successfully.
 
 Local assessments use the joblib releases installed in the API Docker image.
-Keep the API running and check `http://localhost:8000/ready`. The evaluation
-page's **API model releases** view shows these files and their own reports.
-**Notebook submissions** reads the local database by default, so its saved
-metrics can differ from the hosted database. To populate it from the packaged
-antenatal evaluation reports, run this from the repository root:
+Keep the API running and check `http://localhost:8000/ready`. The authenticated
+`/model-releases` API describes the installed files. The hidden `/performance`
+page reads the approved research comparison from `/evaluation-metrics`; startup
+installs that versioned comparison in both local and hosted databases. It is
+separate from the models used for ongoing-pregnancy assessment.
+
+The optional command below publishes packaged antenatal reports to the legacy
+`/metrics` store, without replacing the approved performance comparison:
 
 ```bash
 docker compose exec api python -m ml.src.train_antenatal_models --publish-local
@@ -247,3 +250,65 @@ previously produced with the built-in image generation tool. Its final prompt fo
 > Use case: photorealistic-natural. Asset type: portrait photograph for an East African maternal health clinician portal sign-in page. Create an elegant editorial maternity portrait of an adult Kenyan or Tanzanian Black woman in her early thirties, pregnant, wearing a modest flowing warm ivory maternity dress with a soft sage overshirt, seated comfortably in three-quarter profile with one hand resting naturally on her belly. A quiet, confident smile, natural textured hair, authentic skin texture and proportions. Minimal warm sand and ivory studio background, soft daylight from the side, muted terracotta and olive undertones. Premium healthcare editorial photography, calm, dignified and welcoming. Vertical portrait composition, head and hands fully in frame, generous clean space above and beside the subject for a responsive crop. Single subject, no text, no graphic UI, no graphs, no medical equipment, no logos, no watermark.
 
 Typography and icons are served from local assets with their licenses.
+
+## Birth outcomes and clinical follow-up
+
+After saving an assessment, open **Clinic records**, search the patient reference,
+and select **Add outcome or notes**. Enter the follow-up date and information
+source. You can record notes before the birth with **Not yet known**, then update
+with the birth date, measured birth weight in grams, and survival status.
+For a death after live birth, record age at death in completed days (0 means the
+birth day). For multiples, choose a baby number and keep that number consistent
+with the maternity register. Record each baby separately.
+
+The API creates the `birth_outcomes` table automatically at startup for both new
+and existing databases, using the serialized migration transaction (version 5).
+Existing assessments are preserved. Each saved change appends a revision with
+clinician ID, timestamp, baby number and assessment ID. History shows the latest
+revision per baby; **View follow-up history** shows all revisions. Conflicting
+edits return HTTP 409 rather than overwriting another clinician's update.
+
+From the repository root, rebuild the backend to apply the schema:
+
+```bash
+docker compose up -d --build
+```
+
+Synthetic examples are **opt-in and development-only**. First register a local
+clinic, find its clinician ID in `/session` or TablePlus (`doctors.id`), then run
+(replace `1` with that ID):
+
+```bash
+docker compose exec api python -m app.seed_followups --doctor-id 1 --demo
+```
+
+The idempotent seeder creates three clearly marked `DEMO-FOLLOWUP-*` records
+with invented outcomes, including a low-weight baby and a death after birth.
+No prediction model is run for these examples. They have `inputs.synthetic=true`
+and must be excluded from evaluation and training. It never runs automatically
+and refuses production mode. Real clinic data should not be replaced by demos.
+
+API endpoints (signed-in clinicians, own clinic only):
+
+- `POST /predictions/{id}/outcomes`: append an outcome revision. Send
+  `expected_version: 0` for the first entry for a baby; send its current version
+  for later edits. Dates and known-outcome consistency are validated.
+- `GET /predictions/{id}/outcomes`: full revision history.
+- `GET /history`: includes latest `outcomes` per baby.
+
+These observations do not automatically retrain or change live model metrics.
+Before using them for model development, review source quality and completeness,
+resolve corrections and duplicate pregnancies/assessments, exclude synthetic data,
+and avoid splitting the same mother or pregnancy across training and evaluation.
+For the project's targets, measured weight below 2500 g supplies the LBW label;
+stillbirth or death at age 0–6 completed days supplies the perinatal event label.
+An alive follow-up before seven completed days cannot establish a negative
+perinatal label. Missing weight/outcome remains unknown, never a negative result.
+The app stores the observations; it does not yet create training labels or fit
+new models from them.
+
+Care and referral notes provide useful context, but an improved outcome after
+an alert does not prove the alert caused that improvement. Changed care can also
+change the relationship between an initial prediction and the observed outcome.
+Reviewed data, appropriate evaluation and an approved new model release are
+needed before any update to clinical inference.

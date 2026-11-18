@@ -93,3 +93,21 @@ class ClinicInvitation(Base):
     email: Mapped[str] = mapped_column(String(160))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class BirthOutcome(Base):
+    """Append-only follow-up revisions; one baby can have several observations."""
+
+    __tablename__ = "birth_outcomes"
+    __table_args__ = (
+        UniqueConstraint("prediction_id", "baby_number", "version", name="uq_outcome_version"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    prediction_id: Mapped[int] = mapped_column(ForeignKey("predictions.id"), index=True)
+    baby_number: Mapped[int] = mapped_column(Integer)
+    version: Mapped[int] = mapped_column(Integer)
+    doctor_id: Mapped[int] = mapped_column(ForeignKey("doctors.id"))
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    details: Mapped[dict] = mapped_column(JSON)

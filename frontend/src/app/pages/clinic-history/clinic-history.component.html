@@ -10,6 +10,48 @@
           <dl><div><dt>Risk around birth</dt><dd>{{ a.perinatal.calibrated ? (a.perinatal.score | percent:'1.1-1') : 'Earlier research score' }}</dd><small>{{ a.perinatal.calibrated ? 'Calibrated research estimate' : 'Uncalibrated result archived' }}</small></div><div><dt>Low birth weight</dt><dd>{{ a.lbw.status === 'available' && a.lbw.calibrated ? (a.lbw.score | percent:'1.1-1') : 'Unavailable or earlier score' }}</dd><small>Secondary outcome</small></div><div class="baseline"><dt>Checklist</dt><dd [class.flagged]="a.baseline.flagged">{{ a.baseline.flagged ? 'Review recommended' : 'No factors flagged' }}</dd></div></dl>
           <details><summary>View assessment details <span aria-hidden="true">+</span></summary><p>{{ a.baseline.summary }}</p><ul>@for (factor of a.baseline.factors; track factor) { <li>{{ factor }}</li> }@for (factor of a.baseline.unknown_factors; track factor) { <li>{{ factor }}</li> }</ul><p>{{ a.recommendation }}</p>@for (note of a.notes; track note) { <p>{{ note }}</p> }@if (!a.perinatal.calibrated) { <p>The archived primary score was {{ a.perinatal.score | number:'1.3-3' }} on a 0–1 scale.</p> }</details>
         } @else { <p class="legacy">Earlier assessment. Trained-model details were not recorded.</p><p>{{ r.recommendation }}</p> }
+        <section class="follow-up" aria-label="Birth outcome follow-up">
+          <h3>Birth outcome and follow-up</h3>
+          <p>Record what happened after this assessment. Keep notes on care given and the source of the outcome.</p>
+          @for (o of r.outcomes || []; track o.baby_number) {
+            <div class="outcome-summary">
+              <strong>Baby {{ o.baby_number }} · {{ outcomeLabel(o.status) }}</strong>
+              <p>Follow-up: {{ o.observed_on | date:'mediumDate' }} @if (o.birth_date) { · Born: {{ o.birth_date | date:'mediumDate' }} }
+                @if (o.birth_weight_grams !== null) { · Birth weight: {{ o.birth_weight_grams }} g }
+                @if (o.death_age_days !== null) { · Age at death: {{ o.death_age_days }} completed days }</p>
+              <p>Source: {{ o.source }}</p><p class="clinical-notes">{{ o.notes }}</p>
+              <small>Revision {{ o.version }} · Clinician #{{ o.doctor_id }} · {{ o.recorded_at | date:'medium' }}</small>
+              <button type="button" class="secondary-button" (click)="editOutcome(r, o.baby_number)" [disabled]="saving()">Update baby {{ o.baby_number }}</button>
+            </div>
+          } @empty { <p>No birth outcome recorded yet.</p> }
+          <div class="follow-up-actions">
+            <button type="button" class="secondary-button" (click)="editOutcome(r)" [disabled]="saving()">{{ r.outcomes?.length ? 'Open follow-up' : 'Add outcome or notes' }}</button>
+            <button type="button" class="secondary-button" (click)="viewRevisions(r.id)" [disabled]="historyLoading()">View follow-up history</button>
+          </div>
+          @if (outcomeSaved() === r.id) { <p role="status">Follow-up saved to clinic records.</p> }
+          @if (editing() === r.id) {
+            <form class="outcome-form" (ngSubmit)="saveOutcome(r)">
+              <fieldset [disabled]="saving()">
+                <label>Baby number <select name="baby" [ngModel]="draft.baby_number" (ngModelChange)="editOutcome(r, +$event)">@for (n of r.multiple ? [1,2,3,4,5,6,7,8,9,10] : [1]; track n) { <option [ngValue]="n">Baby {{ n }}</option> }</select></label>
+                <label>Follow-up date *<input name="observedOn" type="date" required [(ngModel)]="draft.observed_on" /></label>
+                <label>Birth date <input name="birthDate" type="date" [(ngModel)]="draft.birth_date" /></label>
+                <label>Baby’s outcome *<select name="status" [(ngModel)]="draft.status"><option value="unknown">Not yet known</option><option value="alive">Alive at follow-up</option><option value="stillbirth">Stillbirth</option><option value="died">Died after live birth</option></select></label>
+                @if (draft.status === 'died') { <label>Age at death, completed days *<input name="deathAge" type="number" min="0" max="3650" step="1" required [(ngModel)]="draft.death_age_days" /><small>Enter 0 for a death on the day of birth.</small></label> }
+                <label>Measured birth weight (grams)<input name="birthWeight" type="number" min="100" max="10000" step="1" [(ngModel)]="draft.birth_weight_grams" /><small>Leave blank if not measured or unknown.</small></label>
+                <label class="wide">Source of information *<input name="source" required maxlength="200" [(ngModel)]="draft.source" placeholder="e.g. maternity register or mother’s follow-up report" /></label>
+                <label class="wide">Clinical notes and care given<textarea name="notes" rows="4" maxlength="4000" [(ngModel)]="draft.notes" placeholder="Record findings, referrals, care given and follow-up. Avoid names and phone numbers."></textarea></label>
+              </fieldset>
+              <p>Alive today does not confirm survival through the first 7 days. Add a later follow-up when available. Each edit keeps the previous version.</p>
+              @if (outcomeError()) { <p class="error" role="alert">{{ outcomeError() }}</p> }
+              <div class="follow-up-actions"><button class="secondary-button" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save follow-up' }}</button><button class="secondary-button" type="button" [disabled]="saving()" (click)="editing.set(null)">Cancel</button></div>
+            </form>
+          }
+          @if (revisionRecord() === r.id) {
+            <details open><summary>Follow-up history</summary>@for (o of revisions(); track o.baby_number + '-' + o.version) {
+              <div class="outcome-summary"><strong>Baby {{ o.baby_number }} · Revision {{ o.version }} · {{ outcomeLabel(o.status) }}</strong><p>Observed {{ o.observed_on }} · Born {{ o.birth_date || 'unknown' }} · Weight {{ o.birth_weight_grams ?? 'unknown' }} g · Age at death {{ o.death_age_days ?? 'not recorded' }} days</p><p>Source: {{ o.source }}</p><p class="clinical-notes">{{ o.notes }}</p><small>Clinician #{{ o.doctor_id }} · {{ o.recorded_at | date:'medium' }}</small></div>
+            } @empty { <p>No follow-up history yet.</p> }</details>
+          }
+        </section>
       </article>
     } @empty { @if (!loading() && !error()) { <div class="empty"><i class="ti ti-notebook" aria-hidden="true"></i><h2>{{ search ? 'No matching records' : 'Your clinic’s story starts here.' }}</h2><p>{{ search ? 'Try a different patient reference.' : 'Saved assessments will appear here after your first assessment.' }}</p></div> } }
   </div>

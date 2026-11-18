@@ -37,7 +37,7 @@ class PostgresMigrationTests(unittest.TestCase):
                     con.execute(text("SELECT risk FROM predictions WHERE id = 1")).scalar(), 0.03
                 )
                 self.assertEqual(
-                    con.execute(text("SELECT MAX(version) FROM schema_migrations")).scalar(), 4
+                    con.execute(text("SELECT MAX(version) FROM schema_migrations")).scalar(), 5
                 )
                 columns = {column["name"] for column in inspect(con).get_columns("doctors")}
                 self.assertTrue({"token_version", "is_active", "is_owner"} <= columns)

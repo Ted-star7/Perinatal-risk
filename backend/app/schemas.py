@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, timezone
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -116,6 +116,42 @@ class Driver(BaseModel):
     weight: float
 
 
+class BirthOutcomeIn(BaseModel):
+    baby_number: int = Field(ge=1, le=10)
+    expected_version: int = Field(ge=0)
+    birth_date: date | None = None
+    observed_on: date
+    status: Literal["unknown", "alive", "stillbirth", "died"]
+    death_age_days: int | None = Field(default=None, ge=0, le=3650)
+    birth_weight_grams: int | None = Field(default=None, ge=100, le=10000)
+    source: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+    notes: Annotated[str, StringConstraints(strip_whitespace=True, max_length=4000)] = ""
+
+    @model_validator(mode="after")
+    def check_dates(self):
+        today = datetime.now(timezone.utc).date()
+        if self.observed_on > today or (self.birth_date and self.birth_date > self.observed_on):
+            raise ValueError("Check the birth and follow-up dates; future dates are not allowed.")
+        if self.status != "unknown" and self.birth_date is None:
+            raise ValueError("Enter the birth date for a known birth outcome.")
+        if self.birth_weight_grams is not None and self.birth_date is None:
+            raise ValueError("Enter the birth date with a measured birth weight.")
+        if self.status == "died":
+            if self.death_age_days is None:
+                raise ValueError("Enter the baby's age in completed days at death.")
+            if self.death_age_days > (self.observed_on - self.birth_date).days:
+                raise ValueError("Age at death cannot be after the follow-up date.")
+        elif self.death_age_days is not None:
+            raise ValueError("Age at death applies only to a baby who died after live birth.")
+        return self
+
+
+class BirthOutcomeResponse(BirthOutcomeIn):
+    version: int
+    doctor_id: int
+    recorded_at: datetime
+
+
 class PredictResponse(BaseModel):
     id: int
     risk: float
@@ -125,6 +161,8 @@ class PredictResponse(BaseModel):
     created_at: datetime
     patient_ref: str | None = None
     assessment: AssessmentResult | None = None
+    outcomes: list[BirthOutcomeResponse] = []
+    multiple: bool = False
 
 
 # ---- model metrics (one row per cohort + algorithm; modeling notebooks post here) ----
