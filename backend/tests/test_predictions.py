@@ -55,6 +55,7 @@ class FormControls(HTMLParser):
 class PredictionTests(unittest.TestCase):
     def setUp(self):
         self.request = PredictRequest(
+            patient_ref="ANC-014",
             age=29,
             age_at_start=29,
             parity=1,
@@ -63,12 +64,30 @@ class PredictionTests(unittest.TestCase):
             anc_visits=3,
         )
 
+    def test_patient_reference_is_required_and_trimmed(self):
+        body = self.request.model_dump()
+        for value in [None, "", "   ", "x" * 61]:
+            with self.assertRaises(ValueError):
+                PredictRequest(**(body | {"patient_ref": value}))
+        del body["patient_ref"]
+        with self.assertRaises(ValueError):
+            PredictRequest(**body)
+        self.assertEqual(
+            PredictRequest(**(body | {"patient_ref": " ANC-014 "})).patient_ref, "ANC-014"
+        )
+
     def test_first_pregnancy_and_previous_losses_have_different_features(self):
         first = feature_row(
-            PredictRequest(age=25, age_at_start=25, parity=0, first_pregnancy=True), "perinatal"
+            PredictRequest(
+                patient_ref="ANC-014", age=25, age_at_start=25, parity=0, first_pregnancy=True
+            ),
+            "perinatal",
         )
         loss = feature_row(
-            PredictRequest(age=25, age_at_start=25, parity=0, previous_loss=True), "perinatal"
+            PredictRequest(
+                patient_ref="ANC-014", age=25, age_at_start=25, parity=0, previous_loss=True
+            ),
+            "perinatal",
         )
         self.assertEqual(first["first_pregnancy"], 1)
         self.assertEqual(loss["first_pregnancy"], 0)

@@ -138,7 +138,13 @@ class AccessTests(unittest.TestCase):
             ),
             recommendation="Review",
         )
-        body = {"request_id": str(uuid4()), "age": 29, "parity": 1, "interval_months": 30}
+        body = {
+            "patient_ref": "ANC-014",
+            "request_id": str(uuid4()),
+            "age": 29,
+            "parity": 1,
+            "interval_months": 30,
+        }
         with patch("app.routers.predictions.score", return_value=result) as scoring:
             preview = self.client.post("/assess", json=body, headers=self.headers).json()
             scoring.side_effect = RuntimeError("Model service changed after preview")

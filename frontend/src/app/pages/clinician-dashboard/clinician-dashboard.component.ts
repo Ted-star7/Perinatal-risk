@@ -58,6 +58,8 @@ export class ClinicianDashboardComponent {
         errors[key] = `Enter a whole number from ${min} to ${max}.`;
       }
     };
+    if (!f.patientRef.trim()) errors['patientRef'] = 'Enter the patient’s ANC card or clinic reference.';
+    else if (f.patientRef.trim().length > 60) errors['patientRef'] = 'Use no more than 60 characters.';
     validateNumber('age', 11, 55, true);
     validateNumber('parity', 0, 16, true);
     for (const key of ['firstPregnancy', 'previousStillbirth', 'previousLoss', 'multiple'] as const) {
@@ -154,7 +156,7 @@ export class ClinicianDashboardComponent {
     return {
       request_id: this.requestId,
       assessment_token: this.result()?.assessment_token ?? undefined,
-      patient_ref: f.patientRef.trim() || undefined,
+      patient_ref: f.patientRef.trim(),
       age_at_start: f.age!, parity: f.parity!, first_pregnancy: f.firstPregnancy!,
       previous_stillbirth: f.previousStillbirth!, previous_loss: f.previousLoss!,
       multiple: f.multiple!, education: f.education,
@@ -180,7 +182,7 @@ export class ClinicianDashboardComponent {
   }
 
   save(): void {
-    if (this.busy() || this.saved() || !this.result()) return;
+    if (this.busy() || this.saved() || !this.result() || Object.keys(this.errors()).length) return;
     const revision = this.revision;
     this.saving.set(true);
     this.error.set('');

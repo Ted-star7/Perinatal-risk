@@ -6,6 +6,17 @@
     <form class="assessment-form" (ngSubmit)="assess()" novalidate>
       <div class="form-heading"><div><h2>Pregnancy details</h2><p>Required questions are marked <span aria-hidden="true">*</span>.</p></div><i class="ti ti-clipboard-heart" aria-hidden="true"></i></div>
       <fieldset class="form-fields" [disabled]="busy()">
+        <section class="field-section" aria-labelledby="record-heading">
+          <h3 id="record-heading"><i class="ti ti-notebook" aria-hidden="true"></i> Clinic record</h3>
+          <div class="field-grid">
+            <label class="wide">
+              <span>Patient reference <span class="required">*</span></span>
+              <input name="patientRef" required maxlength="60" [ngModel]="form().patientRef" (ngModelChange)="update('patientRef', $event)" placeholder="e.g. ANC-014" autocomplete="off" [attr.aria-invalid]="submitted() && !!errors()['patientRef']" aria-describedby="patient-reference-help patient-reference-error" />
+              <small id="patient-reference-help">Use the mother’s ANC card or clinic reference to find her saved assessment. This is used for recordkeeping.</small>
+              <small class="error" id="patient-reference-error">{{ submitted() ? errors()['patientRef'] : '' }}</small>
+            </label>
+          </div>
+        </section>
         <section class="field-section">
           <h3><i class="ti ti-user" aria-hidden="true"></i> About this pregnancy</h3>
           <div class="field-grid">
@@ -70,16 +81,6 @@
                 <option [ngValue]="null">Unknown</option><option value="No education">No formal education</option><option value="Primary">Primary school</option><option value="Secondary">Secondary school</option><option value="Higher">College or university</option>
               </select>
               <small id="education-help">Needed to calculate low birth weight, together with the pregnancy details above. If unknown, the risk around birth can still be calculated.</small>
-            </label>
-          </div>
-        </section>
-        <section class="field-section" aria-labelledby="record-heading">
-          <h3 id="record-heading"><i class="ti ti-notebook" aria-hidden="true"></i> Clinic record</h3>
-          <div class="field-grid">
-            <label class="wide">
-              <span>Patient reference <span class="optional">Optional</span></span>
-              <input name="patientRef" maxlength="60" [ngModel]="form().patientRef" (ngModelChange)="update('patientRef', $event)" placeholder="e.g. ANC-014" autocomplete="off" aria-describedby="patient-reference-help" />
-              <small id="patient-reference-help">Use the mother’s ANC card or clinic reference to find her saved assessment. This is used for recordkeeping.</small>
             </label>
           </div>
         </section>

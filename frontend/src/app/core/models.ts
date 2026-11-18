@@ -26,7 +26,7 @@ export interface LoginBody {
 export interface PredictRequest {
   request_id?: string;
   assessment_token?: string;
-  patient_ref?: string;
+  patient_ref: string;
   age?: number;
   age_at_start?: number;
   parity: number;

@@ -54,7 +54,9 @@ class AcceptInvitation(BaseModel):
 class PredictRequest(BaseModel):
     request_id: UUID | None = None
     assessment_token: str | None = None
-    patient_ref: str | None = Field(default=None, max_length=60)
+    patient_ref: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)
+    ]
     age: int | None = Field(default=None, ge=11, le=55)
     age_at_start: int | None = Field(default=None, ge=11, le=55)
     parity: int = Field(ge=0, le=16)

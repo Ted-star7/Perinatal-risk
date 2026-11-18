@@ -21,6 +21,7 @@ describe('ClinicianDashboardComponent', () => {
   let api: jasmine.SpyObj<ApiService>;
 
   function completeForm(): void {
+    component.update('patientRef', 'ANC-014');
     component.update('age', 29);
     component.update('firstPregnancy', true);
     component.update('multiple', false);
@@ -43,6 +44,16 @@ describe('ClinicianDashboardComponent', () => {
     component.assess();
     expect(api.assess).not.toHaveBeenCalled();
     expect(component.result()).toBeNull();
+  });
+
+  it('rejects a blank patient reference and sends a trimmed reference', () => {
+    completeForm();
+    component.update('patientRef', '   ');
+    component.assess();
+    expect(api.assess).not.toHaveBeenCalled();
+    component.update('patientRef', ' ANC-014 ');
+    component.assess();
+    expect(api.assess.calls.mostRecent().args[0].patient_ref).toBe('ANC-014');
   });
 
   it('shows the API result for both outcomes', () => {
