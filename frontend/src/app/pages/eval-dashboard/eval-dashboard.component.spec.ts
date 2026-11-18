@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EvalDashboardComponent } from './eval-dashboard.component';
-import { of, Subject, throwError } from 'rxjs';
-import { ApiService, ModelMetricResponse, ModelRelease } from '../../core/api.service';
+import { of, throwError } from 'rxjs';
+import { ApiService, ModelMetricResponse } from '../../core/api.service';
 
 const records: ModelMetricResponse[] = ['perinatal', 'perinatal_anc', 'lbw'].map((cohort) => ({
   cv_pr_auc: 0.1, cohort, algorithm: 'random_forest', pr_auc: 0.1, roc_auc: 0.6,
@@ -36,71 +36,20 @@ describe('EvalDashboardComponent', () => {
     expect(component.metrics().length).toBe(3);
   });
 
-  it('orders both sources as primary outcome, secondary outcome and then ANC', () => {
-    component.releases.set(['lbw', 'perinatal_anc', 'perinatal'].map((cohort) => ({
-      cohort, available: true,
-    })));
-    expect(component.cohortGroups().map((group) => group.cohort))
-      .toEqual(['perinatal', 'lbw', 'perinatal_anc']);
-    expect(component.orderedReleases().map((model) => model.cohort))
-      .toEqual(['perinatal', 'lbw', 'perinatal_anc']);
-  });
-
-  it('keeps submitted rankings separate from a release with the same algorithm name', () => {
-    const base = records[2];
-    api.metrics.and.returnValue(of([
-      { ...base, algorithm: 'random_forest', cv_pr_auc: 0.19, pr_auc: 0.14 },
-      { ...base, algorithm: 'gradient_boosting', cv_pr_auc: 0.18, pr_auc: 0.17, is_best: false },
-      { ...base, algorithm: 'logistic_regression', cv_pr_auc: 0.17, pr_auc: 0.13, is_best: false },
-    ]));
-    api.releases.and.returnValue(of([{
-      cohort: 'lbw', algorithm: 'random_forest', available: true, serving: true,
-      model_id: 'selected:release-hash', prediction_context: 'antenatal_history_v1',
-      evaluation: {
-        selection: 'Highest grouped training CV average precision.',
-        test: { pr_auc: 0.144, roc_auc: 0.652, mean_score: 0.08, event_rate: 0.07, brier_score: 0.06 },
-      },
-    }]));
-    component.loadMetrics();
+  it('orders cohorts and selects by CV rather than test AP', () => {
+    expect(component.cohortGroups().map(g => g.cohort)).toEqual(['perinatal', 'lbw', 'perinatal_anc']);
+    component.metrics.set([
+      { cohort: 'lbw', algorithm: 'random_forest', cvPrAuc: 0.19, prAuc: 0.14,
+        rocAuc: 0.6, recallAtFlag: 0.5, beatsChecklist: true, isBest: true, testEvents: 100, updatedAt: '' },
+      { cohort: 'lbw', algorithm: 'gradient_boosting', cvPrAuc: 0.18, prAuc: 0.17,
+        rocAuc: 0.6, recallAtFlag: 0.5, beatsChecklist: true, isBest: false, testEvents: 100, updatedAt: '' },
+    ]);
     fixture.detectChanges();
-    expect(component.cohortGroups()[0].topModels.map((row) => row.algorithm))
-      .toEqual(['random_forest', 'gradient_boosting']);
+    expect(component.rows('lbw')[0].algorithm).toBe('random_forest');
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('tbody tr.selected')).toBeNull();
-    expect(element.querySelector('.calibration')).toBeNull();
+    expect(element.querySelector('.source-switch')).toBeNull();
     expect(element.querySelector('.release-report')).toBeNull();
-
-    const switcher = element.querySelectorAll<HTMLButtonElement>('.source-switch button');
-    switcher[1].click();
-    fixture.detectChanges();
-    const release = element.querySelector('.release-report')!;
-    expect(element.querySelector('table')).toBeNull();
-    expect(release.querySelector('.release-pr')?.textContent?.trim()).toBe('0.144');
-    expect(release.textContent).toContain('random forest');
-    expect(release.textContent).toContain('selected:release-hash');
-    expect(release.textContent).toContain('Highest grouped training CV average precision.');
-    expect(release.textContent).not.toContain('0.140');
-    expect(switcher[1].getAttribute('aria-pressed')).toBe('true');
-  });
-
-  it('waits for model information before showing the completed comparison', () => {
-    const releases = new Subject<ModelRelease[]>();
-    api.releases.and.returnValue(releases);
-    component.loadMetrics();
-    expect(component.loading()).toBeTrue();
-    releases.next([{ cohort: 'lbw', available: true, algorithm: 'gradient_boosting' }]);
-    releases.complete();
-    expect(component.loading()).toBeFalse();
-    expect(component.releases()[0]?.algorithm).toBe('gradient_boosting');
-  });
-
-  it('keeps evaluation results available when model information cannot be checked', () => {
-    api.releases.and.returnValue(throwError(() => new Error('Unavailable')));
-    component.loadMetrics();
-    expect(component.loading()).toBeFalse();
-    expect(component.error()).toBe('');
-    expect(component.metrics().length).toBe(3);
-    expect(component.releases()).toEqual([]);
+    expect(api.releases).not.toHaveBeenCalled();
   });
 
   it('lets the user retry a failed metrics request', () => {
@@ -125,16 +74,4 @@ describe('EvalDashboardComponent', () => {
     expect(element.querySelector('[role="status"]')?.textContent).toContain('No model results are available yet.');
   });
 
-  it('shows API releases even if the submissions request fails', () => {
-    api.metrics.and.returnValue(throwError(() => new Error('Offline')));
-    api.releases.and.returnValue(of([{
-      cohort: 'lbw', algorithm: 'random_forest', available: true, serving: true,
-      evaluation: { test: { pr_auc: 0.144, mean_score: 0.08, event_rate: 0.07, brier_score: 0.06 } },
-    }]));
-    component.loadMetrics();
-    component.view.set('releases');
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.release-pr')?.textContent?.trim()).toBe('0.144');
-    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
-  });
 });

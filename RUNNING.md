@@ -135,8 +135,9 @@ active legacy `model_metrics` values. Previous submissions are retained in
 `model_metrics_archive`. `/evaluation-metrics` reads the approved database set,
 so later unversioned notebook submissions cannot mix or overwrite its figures.
 The approved set is aggregate evaluation data, not executed notebook output.
-The ongoing-pregnancy input form and its fitted model releases remain separate;
-**API model releases** shows their own evaluation and predictor definitions.
+The ongoing-pregnancy input form and its fitted model releases remain separate.
+The performance page shows only the approved research comparison; release metadata
+is available through the authenticated API for internal checks.
 
 The antenatal trainer compares logistic regression, random forest and gradient
 boosting for each cohort using five grouped training folds. It selects by mean

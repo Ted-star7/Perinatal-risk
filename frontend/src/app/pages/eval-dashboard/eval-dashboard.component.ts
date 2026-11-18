@@ -1,8 +1,7 @@
 
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { catchError, forkJoin, of } from 'rxjs';
-import { ApiService, ModelRelease } from '../../core/api.service';
+import { ApiService } from '../../core/api.service';
 
 /** Model evaluation metrics displayed in simple, understandable language. */
 export interface ModelMetrics {
@@ -35,13 +34,7 @@ export interface CohortPerformanceGroup {
 })
 export class EvalDashboardComponent implements OnInit {
   readonly metrics = signal<ModelMetrics[]>([]);
-  readonly releases = signal<ModelRelease[]>([]);
-  readonly view = signal<'submissions' | 'releases'>('submissions');
-  readonly releaseError = signal('');
   readonly cohorts = ['perinatal', 'lbw', 'perinatal_anc'];
-  readonly orderedReleases = computed(() =>
-    this.cohorts.flatMap((cohort) => this.releases().filter((model) => model.cohort === cohort)),
-  );
   readonly cohortGroups = computed<CohortPerformanceGroup[]>(() =>
     this.cohorts.map((cohort) => {
       const models = this.rows(cohort);
@@ -61,20 +54,8 @@ export class EvalDashboardComponent implements OnInit {
   loadMetrics(): void {
     this.loading.set(true);
     this.error.set('');
-    this.releaseError.set('');
-
-    forkJoin({
-      records: this.api.metrics().pipe(catchError(() => {
-        this.error.set('Unable to load submitted model results. Please try again.');
-        return of([]);
-      })),
-      releases: this.api.releases().pipe(catchError(() => {
-        this.releaseError.set('Unable to check the API model releases. Please try again.');
-        return of([]);
-      })),
-    }).subscribe({
-      next: ({ records, releases }) => {
-        this.releases.set(releases);
+    this.api.metrics().subscribe({
+      next: (records) => {
         const mappedRecords: ModelMetrics[] = records.map((record) => ({
           cohort: record.cohort,
           cvPrAuc: record.cv_pr_auc,
@@ -90,6 +71,10 @@ export class EvalDashboardComponent implements OnInit {
         }));
 
         this.metrics.set(mappedRecords);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Unable to load model results. Please try again.');
         this.loading.set(false);
       },
     });

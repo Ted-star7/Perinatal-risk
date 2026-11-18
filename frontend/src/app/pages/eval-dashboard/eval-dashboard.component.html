@@ -9,49 +9,8 @@
       {{ loading() ? 'Refreshing…' : 'Refresh results' }}
     </button>
   </header>
-  <p class="research-note">Results come from historical survey records. Testing in clinical care and agreeing on care thresholds are still pending.</p>
-  <nav class="source-switch" aria-label="Evaluation result source">
-    <button type="button" [attr.aria-pressed]="view() === 'submissions'" (click)="view.set('submissions')">CV model comparison</button>
-    <button type="button" [attr.aria-pressed]="view() === 'releases'" (click)="view.set('releases')">API model releases</button>
-  </nav>
   @if (loading()) {
     <p role="status">Loading model results…</p>
-  } @else if (view() === 'releases') {
-    <section class="source-heading">
-      <h2>Models loaded by the assessment API</h2>
-      <p>These figures belong to the exact model files reported by the API. Their feature definitions and training runs can differ from notebook submissions.</p>
-    </section>
-    @if (releaseError()) {
-      <div class="error" role="alert"><p>{{ releaseError() }}</p><button type="button" (click)="loadMetrics()">Try again</button></div>
-    } @else {
-      @for (model of orderedReleases(); track model.cohort) {
-        <section class="cohort release-report">
-          <div class="cohort-title"><h2>{{ cohortLabel(model.cohort) }}</h2><span>{{ !model.available ? 'Unavailable' : model.serving ? 'Used for clinician assessments' : 'Research comparison only' }}</span></div>
-          @if (model.available && model.evaluation; as evaluation) {
-            <h3>{{ algorithmLabel(model.algorithm ?? '') }}</h3>
-            <p class="ranking-note">All figures in this card come from this release’s own evaluation report.</p>
-            <div class="calibration release-scores">
-              <div><span>Mean grouped CV PR-AUC</span><strong class="release-pr">{{ evaluation.test.pr_auc == null ? 'Not reported' : (evaluation.test.pr_auc | number:'1.3-3') }}</strong></div>
-              <div><span>Distinguishing outcomes (ROC-AUC)</span><strong>{{ evaluation.test.roc_auc == null ? 'Not reported' : (evaluation.test.roc_auc | number:'1.3-3') }}</strong></div>
-              <div><span>Size of prediction errors (Brier score)</span><strong>{{ evaluation.test.brier_score | number:'1.4-4' }}</strong></div>
-              <div><span>Average risk estimated (mean prediction)</span><strong>{{ evaluation.test.mean_score | percent:'1.2-2' }}</strong></div>
-              <div><span>Cases actually affected (observed rate)</span><strong>{{ evaluation.test.event_rate | percent:'1.2-2' }}</strong></div>
-            </div>
-            @if (evaluation.selection) { <p class="selection-reason"><strong>Recorded selection method:</strong> {{ evaluation.selection }}</p> }
-            <details>
-              <summary>Model version, inputs and results by country</summary>
-              <p>Model prepared {{ model.created_at | date:'medium' }}</p>
-              <p class="hash">Model identifier {{ model.model_id }}</p>
-              @if (model.prediction_context) { <p>Input definition: {{ model.prediction_context }}</p> }
-              @if (model.features?.length) { <p class="hash">Recorded predictors: {{ model.features.join(', ') }}</p> }
-              @for (entry of evaluation.country_metrics | keyvalue; track entry.key) {
-                <p>{{ entry.key }} · Finding affected cases (PR-AUC) {{ entry.value.unweighted.pr_auc | number:'1.3-3' }} · Distinguishing outcomes (ROC-AUC) {{ entry.value.unweighted.roc_auc | number:'1.3-3' }}</p>
-              }
-            </details>
-          } @else { <p class="error">The model for this outcome is currently unavailable.</p> }
-        </section>
-      } @empty { <p role="status">No API model release information is available yet.</p> }
-    }
   } @else if (error()) {
     <div class="error" role="alert">
       <p>{{ error() }}</p>
@@ -63,7 +22,7 @@
     <section class="source-heading">
       <h2>Model comparison selected by mean CV PR-AUC</h2>
       <p>Approved research comparison: scikit-learn 1.9.1, five grouped training-validation folds. Each cohort is selected by mean CV PR-AUC. These approved results are saved in the database; test performance is reported separately.</p>
-      <p>This comparison uses the original notebook predictors, including completed-pregnancy information. The ongoing-pregnancy assessment has a separate input contract and fitted models, shown under API model releases.</p>
+      <p>This comparison uses the original notebook predictors, including completed-pregnancy information. The ongoing-pregnancy assessment uses a separate input contract and fitted models.</p>
     </section>
     @for (group of cohortGroups(); track group.cohort) {
       <section class="cohort">
@@ -133,21 +92,15 @@
       </div>
       <div>
         <h3>Affected cases found (recall)</h3>
-        <p>Shows the proportion of affected test cases found when each candidate flags the same number of pregnancies as the ongoing-pregnancy checklist. This is a research comparison rule, not a clinical probability cutoff.</p>
+        <p>Shows the proportion of affected test cases found when each candidate flags the same number of pregnancies as the research checklist. This is a research comparison rule, not a clinical probability cutoff.</p>
         <p>For example, 60% means 60 out of every 100 affected cases in the test records were found.</p>
       </div>
       <div>
         <h3>Compared with the checklist</h3>
-        <p>Compares affected cases found at the same flag count using this model release’s own checklist definition. All rows in a cohort come from the same ongoing-pregnancy evaluation report.</p>
+        <p>Compares affected cases found at the same flag count using this model release’s own checklist definition. All rows in a cohort come from the same approved research evaluation report.</p>
       </div>
-      <div>
-        <h3>API model releases</h3>
-        <p>Shows the model files loaded by the API with their own evaluation reports and recorded selection method. This view is separate from the submitted notebook rankings.</p>
-      </div>
-      <div>
-        <h3>Size of prediction errors (Brier score)</h3>
-        <p>Measures how close the estimated probabilities were to the recorded outcomes. Lower values are better.</p>
-      </div>
+
+
     </div>
     <p class="guide-footer">These numbers describe model performance across test records. Individual care requires clinical findings and review by a qualified healthcare professional.</p>
     <p class="metric-sources">Metric definitions follow the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html" target="_blank" rel="noopener noreferrer">scikit-learn evaluation documentation</a>.</p>

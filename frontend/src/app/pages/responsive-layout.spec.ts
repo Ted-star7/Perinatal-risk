@@ -115,7 +115,7 @@ describe('Clinician portal layouts', () => {
     }
   });
 
-  it('fits populated notebook and model-release views on mobile, tablet and desktop', async () => {
+  it('fits the populated performance page on mobile, tablet and desktop', async () => {
     const fixture = TestBed.createComponent(EvalDashboardComponent);
     fixture.detectChanges();
     const component = fixture.componentInstance;
@@ -124,30 +124,18 @@ describe('Clinician portal layouts', () => {
       recallAtFlag: 0.562, beatsChecklist: true, isBest: true, testEvents: 130,
       updatedAt: '2026-11-16T10:00:00Z',
     })));
-    component.releases.set(['lbw', 'perinatal_anc', 'perinatal'].map((cohort) => ({
-      cohort, algorithm: 'random_forest', available: true, serving: cohort !== 'perinatal_anc',
-      model_id: 'selected:' + 'a'.repeat(64), prediction_context: 'antenatal_history_v1',
-      features: ['maternal_age_at_start', 'prior_live_births', 'first_pregnancy'],
-      evaluation: {
-        selection: 'Highest five-fold grouped training CV average precision across three algorithms.',
-        test: { pr_auc: 0.144, roc_auc: 0.652, mean_score: 0.0813, event_rate: 0.0703, brier_score: 0.0632 },
-      },
-    })));
-    for (const view of ['submissions', 'releases'] as const) {
-      component.view.set(view);
-      fixture.detectChanges();
-      fixture.nativeElement.querySelectorAll('details').forEach((node: HTMLDetailsElement) => {
-        node.open = true;
-      });
-      for (const width of [320, 390, 600, 768, 1024, 1440]) {
-        const frame = await frameFor(fixture.nativeElement, width);
-        try {
-          const root = frame.contentDocument!.documentElement;
-          expect(root.scrollWidth).withContext(`${view} at ${width}px`)
-            .toBeLessThanOrEqual(root.clientWidth + 1);
-        } finally {
-          frame.remove();
-        }
+    fixture.detectChanges();
+    fixture.nativeElement.querySelectorAll('details').forEach((node: HTMLDetailsElement) => {
+      node.open = true;
+    });
+    for (const width of [320, 390, 600, 768, 1024, 1440]) {
+      const frame = await frameFor(fixture.nativeElement, width);
+      try {
+        const root = frame.contentDocument!.documentElement;
+        expect(root.scrollWidth).withContext(`performance at ${width}px`)
+          .toBeLessThanOrEqual(root.clientWidth + 1);
+      } finally {
+        frame.remove();
       }
     }
     fixture.destroy();
