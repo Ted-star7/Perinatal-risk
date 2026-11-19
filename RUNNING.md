@@ -312,3 +312,57 @@ an alert does not prove the alert caused that improvement. Changed care can also
 change the relationship between an initial prediction and the observed outcome.
 Reviewed data, appropriate evaluation and an approved new model release are
 needed before any update to clinical inference.
+
+## Returning mothers, saved baby counts and outcome charts
+
+Start with the required **Patient reference**. As the clinician types, the form
+checks for an exact match in the signed-in clinic (ignoring case and outer
+spaces). It does not search other clinics or use partial matches to identify a
+mother. Keep using the same reference for the same mother; verify it against
+her card before loading previous details.
+
+For a returning patient, choose **Continue saved pregnancy** to load the latest
+answers, then confirm them with her. Repeat assessments are linked to the same
+`pregnancy_id`, and share baby count and follow-up outcomes. Choose **Start a new
+pregnancy** to keep her reference and education but enter the new pregnancy and
+updated history. A first clinic visit is different from a first pregnancy.
+Changing the reference clears the previous mother's details and pending results.
+
+For a multiple pregnancy, select **Number of babies expected**. It is persisted
+in `predictions.baby_count`; the follow-up baby selector uses exactly `1..N`, and
+the API rejects a baby number outside that count. Earlier single-pregnancy
+records are backfilled to one; old multiple-pregnancy records without an exact
+count remain unknown. Confirm that number in Clinic records before adding
+follow-up. A count correction cannot hide a baby who already has an outcome.
+Migration 6 adds `baby_count` and `pregnancy_id` without deleting existing rows.
+Legacy assessments each retain their own pregnancy group because their episode
+identity cannot reliably be reconstructed from the reference alone; historical
+repeat visits may therefore still represent duplicate pregnancies. New visits
+must use **Continue saved pregnancy** to avoid creating another pregnancy group.
+
+**Birth-spacing history** records completed months from the previous birth to
+the *start* of this pregnancy. Leave it blank when unknown or not applicable.
+The API saves `birth_spacing_months` in the assessment inputs and displays it in
+Clinic records. It is **not** the notebooks' `preceding_interval_m` (an interval
+between pregnancy outcomes), and it is **not used by the current serving models**.
+No retraining, model release or approved performance metrics change is made.
+
+Clinic records contains charts for survival at last follow-up and measured birth
+weight, plus pending outcomes. They read `/outcome-summary` for the whole clinic,
+independent of the history search and pagination. The latest revision per baby
+is counted once per linked pregnancy. Synthetic examples are excluded, missing
+outcomes and weights stay unknown, and pregnancies missing baby count are shown
+separately. These descriptive totals are not model accuracy or evidence that an
+alert caused an improved outcome.
+
+New authenticated endpoints:
+
+- `GET /patients/lookup?reference=...`: latest saved inputs and assessment for an
+  exact reference in this clinic.
+- `GET /outcome-summary`: clinic totals, latest baby outcomes and birth weights.
+- `PATCH /predictions/{id}/baby-count`: confirm/correct the pregnancy's count;
+  send `baby_count` and the currently displayed `expected_count` (null if unknown).
+
+To update locally, rebuild the API with `docker compose up -d --build` and restart
+`ng serve` in `frontend/`. Startup applies the migration. Existing demonstration
+seeding remains explicit and development-only.

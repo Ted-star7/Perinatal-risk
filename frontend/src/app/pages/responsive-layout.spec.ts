@@ -58,7 +58,11 @@ describe('Clinician portal layouts', () => {
           isLoggedIn: signal(true),
           session: signal({ doctor_id: 1, clinic_id: 1, doctor_name: 'Test clinician', clinic_name: 'Test clinic' }),
         } },
-        { provide: ApiService, useValue: { history: () => of([]), metrics: () => of([]), releases: () => of([]) } },
+        { provide: ApiService, useValue: { history: () => of([]), outcomeSummary: () => of({
+          pregnancies: 1, babies: 2, pregnancies_without_baby_count: 0,
+          survival: { alive: 1, died: 0, stillbirth: 0, pending: 1 },
+          birth_weight: { below_2500: 1, at_least_2500: 0, unknown: 1 }, synthetic_excluded: true,
+        }), patientLookup: () => of({ found: false, assessment_count: 0, latest: null, inputs: null }), metrics: () => of([]), releases: () => of([]) } },
         { provide: HttpClient, useValue: { get: () => of([]) } },
       ],
     }).compileComponents();
@@ -70,14 +74,17 @@ describe('Clinician portal layouts', () => {
       const component = fixture.componentInstance;
       if (component instanceof ClinicianDashboardComponent) {
         component.update('firstPregnancy', false);
+        component.update('multiple', true);
+        component.update('babyCount', 2);
         component.result.set(assessment);
       }
       if (component instanceof ClinicHistoryComponent) {
         component.rows.set([{
-          id: 1, patient_ref: 'ANC-' + 'X'.repeat(56), created_at: '2026-11-15T10:00:00Z',
+          id: 1, baby_count: 2, pregnancy_id: 1, patient_ref: 'ANC-' + 'X'.repeat(56), created_at: '2026-11-15T10:00:00Z',
           risk: 0.035, risk_band: 'unclassified', top_drivers: [], recommendation: 'Review the assessment.',
           assessment,
         }]);
+        component.editOutcome(component.rows()[0]);
       }
       fixture.detectChanges();
       await fixture.whenStable();

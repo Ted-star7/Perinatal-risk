@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query
 from jwt import PyJWTError as JWTError
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,7 @@ from app.database import get_db
 from app.models import BirthOutcome, Prediction
 from app.schemas import (
     AssessmentResult,
+    BabyCountUpdate,
     BirthOutcomeIn,
     BirthOutcomeResponse,
     Driver,
@@ -63,7 +64,14 @@ def _to_response(prediction: Prediction, outcomes=None) -> PredictResponse:
         patient_ref=prediction.patient_ref,
         assessment=prediction.assessment,
         outcomes=outcomes or [],
-        multiple=bool(prediction.inputs.get("multiple")),
+        multiple=(
+            prediction.baby_count > 1
+            if prediction.baby_count
+            else bool(prediction.inputs.get("multiple"))
+        ),
+        baby_count=prediction.baby_count,
+        pregnancy_id=prediction.pregnancy_id or prediction.id,
+        birth_spacing_months=prediction.inputs.get("birth_spacing_months"),
     )
 
 
@@ -76,7 +84,11 @@ def _retry_response(prediction: Prediction, body: PredictRequest) -> PredictResp
 
 
 @router.post("/assess", response_model=AssessmentResult)
-def assess(body: PredictRequest, who: dict = Depends(current_doctor)) -> AssessmentResult:
+def assess(
+    body: PredictRequest, db: Session = Depends(get_db), who: dict = Depends(current_doctor)
+) -> AssessmentResult:
+    if body.pregnancy_id:
+        _continuing_pregnancy(db, who, body)
     try:
         result = score(body)
     except AssessmentInputError as exc:
@@ -107,6 +119,9 @@ def predict(
     existing = _existing(db, who["clinic_id"], request_id)
     if existing:
         return _retry_response(existing, body)
+    parent = _continuing_pregnancy(db, who, body) if body.pregnancy_id else None
+    if parent:
+        _validate_count(db, parent, body.baby_count)
     if body.assessment_token:
         try:
             payload = jwt.decode(
@@ -136,7 +151,9 @@ def predict(
     prediction = Prediction(
         clinic_id=who["clinic_id"],
         doctor_id=who["doctor_id"],
-        patient_ref=body.patient_ref,
+        patient_ref=parent.patient_ref if parent else body.patient_ref,
+        baby_count=body.baby_count,
+        pregnancy_id=parent.id if parent else None,
         inputs=_inputs(body),
         risk=result.perinatal.score,
         risk_band="unclassified",
@@ -147,6 +164,16 @@ def predict(
     )
     db.add(prediction)
     try:
+        db.flush()
+        prediction.pregnancy_id = parent.id if parent else prediction.id
+        if parent:
+            db.execute(
+                update(Prediction)
+                .where(
+                    Prediction.clinic_id == who["clinic_id"], Prediction.pregnancy_id == parent.id
+                )
+                .values(baby_count=body.baby_count)
+            )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -171,7 +198,11 @@ def history(
     if before:
         query = query.where(Prediction.id < before)
     rows = db.scalars(query.order_by(Prediction.id.desc()).limit(limit)).all()
-    ids = [row.id for row in rows]
+    return _responses(db, rows)
+
+
+def _responses(db, rows):
+    ids = {row.pregnancy_id or row.id for row in rows}
     outcomes = (
         db.scalars(
             select(BirthOutcome)
@@ -185,9 +216,121 @@ def history(
     for outcome in outcomes:
         latest.setdefault((outcome.prediction_id, outcome.baby_number), _outcome_response(outcome))
     return [
-        _to_response(row, [value for (pid, _), value in latest.items() if pid == row.id])
+        _to_response(
+            row,
+            [value for (pid, _), value in latest.items() if pid == (row.pregnancy_id or row.id)],
+        )
         for row in rows
     ]
+
+
+def _continuing_pregnancy(db, who, body):
+    parent = _clinic_prediction(db, who, body.pregnancy_id)
+    parent = _clinic_prediction(db, who, parent.pregnancy_id or parent.id, lock=True)
+    if (parent.patient_ref or "").strip().casefold() != body.patient_ref.strip().casefold():
+        raise HTTPException(422, "This pregnancy belongs to a different patient reference.")
+    return parent
+
+
+@router.get("/patients/lookup")
+def patient_lookup(
+    reference: str = Query(min_length=1, max_length=60),
+    db: Session = Depends(get_db),
+    who: dict = Depends(current_doctor),
+):
+    condition = (
+        Prediction.clinic_id == who["clinic_id"],
+        func.lower(func.trim(Prediction.patient_ref)) == reference.strip().lower(),
+    )
+    latest = db.scalar(select(Prediction).where(*condition).order_by(Prediction.id.desc()).limit(1))
+    if latest is None:
+        return {"found": False, "assessment_count": 0, "latest": None, "inputs": None}
+    count = db.scalar(select(func.count()).select_from(Prediction).where(*condition))
+    return {
+        "found": True,
+        "assessment_count": count,
+        "latest": _responses(db, [latest])[0],
+        "inputs": latest.inputs,
+    }
+
+
+@router.get("/outcome-summary")
+def outcome_summary(db: Session = Depends(get_db), who: dict = Depends(current_doctor)):
+    rows = db.scalars(
+        select(Prediction).where(Prediction.clinic_id == who["clinic_id"]).order_by(Prediction.id)
+    ).all()
+    pregnancies = {}
+    synthetic = {row.pregnancy_id or row.id for row in rows if row.inputs.get("synthetic")}
+    for row in rows:
+        if (row.pregnancy_id or row.id) not in synthetic:
+            pregnancies[row.pregnancy_id or row.id] = row
+    ids = list(pregnancies)
+    latest = {}
+    if ids:
+        for outcome in db.scalars(
+            select(BirthOutcome)
+            .where(BirthOutcome.prediction_id.in_(ids))
+            .order_by(BirthOutcome.version.desc())
+        ):
+            latest.setdefault((outcome.prediction_id, outcome.baby_number), outcome.details)
+    counts = {"pending": 0, "alive": 0, "stillbirth": 0, "died": 0}
+    weights = {"below_2500": 0, "at_least_2500": 0, "unknown": 0}
+    unknown_counts = 0
+    for pregnancy_id, row in pregnancies.items():
+        if row.baby_count is None:
+            unknown_counts += 1
+            continue
+        for number in range(1, row.baby_count + 1):
+            details = latest.get((pregnancy_id, number), {})
+            status = details.get("status", "unknown")
+            counts["pending" if status == "unknown" else status] += 1
+            weight = details.get("birth_weight_grams")
+            weights[
+                "unknown" if weight is None else "below_2500" if weight < 2500 else "at_least_2500"
+            ] += 1
+    return {
+        "pregnancies": len(pregnancies),
+        "babies": sum(counts.values()),
+        "pregnancies_without_baby_count": unknown_counts,
+        "survival": counts,
+        "birth_weight": weights,
+        "synthetic_excluded": True,
+    }
+
+
+def _validate_count(db, prediction, count):
+    highest = (
+        db.scalar(
+            select(func.max(BirthOutcome.baby_number)).where(
+                BirthOutcome.prediction_id == prediction.id
+            )
+        )
+        or 0
+    )
+    if count < highest:
+        raise HTTPException(422, "Baby count cannot hide an existing baby's follow-up.")
+
+
+@router.patch("/predictions/{prediction_id}/baby-count", response_model=PredictResponse)
+def confirm_baby_count(
+    prediction_id: int,
+    body: BabyCountUpdate,
+    db: Session = Depends(get_db),
+    who: dict = Depends(current_doctor),
+):
+    prediction = _clinic_prediction(db, who, prediction_id)
+    root = _clinic_prediction(db, who, prediction.pregnancy_id or prediction.id, lock=True)
+    if root.baby_count != body.expected_count:
+        raise HTTPException(409, "Baby count changed. Reload the record before editing.")
+    _validate_count(db, root, body.baby_count)
+    db.execute(
+        update(Prediction)
+        .where(Prediction.clinic_id == who["clinic_id"], Prediction.pregnancy_id == root.id)
+        .values(baby_count=body.baby_count)
+    )
+    root.baby_count = body.baby_count
+    db.commit()
+    return _responses(db, [prediction])[0]
 
 
 def _outcome_response(row: BirthOutcome) -> BirthOutcomeResponse:
@@ -200,11 +343,12 @@ def _outcome_response(row: BirthOutcome) -> BirthOutcomeResponse:
     )
 
 
-def _clinic_prediction(db, who, prediction_id):
+def _clinic_prediction(db, who, prediction_id, lock=False):
+    query = select(Prediction).where(
+        Prediction.id == prediction_id, Prediction.clinic_id == who["clinic_id"]
+    )
     row = db.scalar(
-        select(Prediction).where(
-            Prediction.id == prediction_id, Prediction.clinic_id == who["clinic_id"]
-        )
+        query.with_for_update().execution_options(populate_existing=True) if lock else query
     )
     if row is None:
         raise HTTPException(404, "Assessment not found.")
@@ -215,7 +359,8 @@ def _clinic_prediction(db, who, prediction_id):
 def outcome_history(
     prediction_id: int, db: Session = Depends(get_db), who: dict = Depends(current_doctor)
 ):
-    _clinic_prediction(db, who, prediction_id)
+    prediction = _clinic_prediction(db, who, prediction_id)
+    prediction_id = prediction.pregnancy_id or prediction.id
     rows = db.scalars(
         select(BirthOutcome)
         .where(BirthOutcome.prediction_id == prediction_id)
@@ -232,8 +377,12 @@ def record_outcome(
     who: dict = Depends(current_doctor),
 ):
     prediction = _clinic_prediction(db, who, prediction_id)
-    if body.baby_number > 1 and not prediction.inputs.get("multiple"):
-        raise HTTPException(422, "This assessment records a single baby.")
+    prediction = _clinic_prediction(db, who, prediction.pregnancy_id or prediction.id, lock=True)
+    prediction_id = prediction.id
+    if prediction.baby_count is None:
+        raise HTTPException(422, "Confirm the saved number of babies before adding follow-up.")
+    if body.baby_number > prediction.baby_count:
+        raise HTTPException(422, "Baby number exceeds the saved number of babies.")
     latest = db.scalar(
         select(BirthOutcome)
         .where(

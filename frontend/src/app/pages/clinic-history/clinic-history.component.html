@@ -1,5 +1,20 @@
 <section class="history-page">
   <header class="heading"><p class="eyebrow">YOUR CLINIC, CONNECTED</p><h1>Care, recorded.</h1><p>Assessments saved to {{ clinicName() }}.</p></header>
+  <section class="outcome-dashboard" aria-label="Clinic birth outcome charts">
+    <div class="chart-heading"><div><h2>Birth outcomes in your clinic</h2><p>Latest recorded outcome for each baby, grouped by pregnancy across follow-up visits. Demonstration records are excluded.</p></div><button type="button" class="secondary-button" (click)="refreshSummary()" [disabled]="summaryLoading()">Refresh charts</button></div>
+    @if (summaryError()) { <p class="error" role="alert">{{ summaryError() }}</p> }
+    @if (summaryLoading()) { <p role="status">Loading outcome totals…</p> }
+    @if (summary(); as s) {
+      <div class="outcome-totals"><div><strong>{{ s.pregnancies }}</strong><span>Recorded pregnancies</span></div><div><strong>{{ s.babies }}</strong><span>Babies with a confirmed count</span></div><div><strong>{{ s.survival.pending }}</strong><span>Outcomes awaiting follow-up</span></div></div>
+      @if (s.pregnancies_without_baby_count) { <p>{{ s.pregnancies_without_baby_count }} earlier pregnancies need their baby count confirmed before inclusion in baby totals.</p> }
+      <div class="chart-grid">
+        <figure><figcaption>Survival at last follow-up</figcaption>@for (bar of survivalBars(); track bar.label) { <div class="chart-row"><span>{{ bar.label }}</span><strong>{{ bar.value }}</strong><div class="chart-track" aria-hidden="true"><div class="chart-bar" [style.width.%]="s.babies ? bar.value / s.babies * 100 : 0"></div></div></div> }</figure>
+        <figure><figcaption>Measured birth weight</figcaption>@for (bar of weightBars(); track bar.label) { <div class="chart-row"><span>{{ bar.label }}</span><strong>{{ bar.value }}</strong><div class="chart-track" aria-hidden="true"><div class="chart-bar weight-bar" [style.width.%]="s.babies ? bar.value / s.babies * 100 : 0"></div></div></div> }</figure>
+      </div>
+      <p>These are recorded outcomes, not model accuracy or proof of treatment effect. “Alive” means alive on the recorded follow-up date; it does not always confirm survival through the first 7 days.</p>
+      @if (!s.pregnancies) { <p>No non-demonstration pregnancies have been saved yet.</p> }
+    }
+  </section>
   <form class="records-toolbar" (ngSubmit)="load()"><label class="search"><i class="ti ti-search" aria-hidden="true"></i><input name="search" [(ngModel)]="search" maxlength="60" aria-label="Search patient reference" placeholder="Search a patient reference" /></label><button type="submit" [disabled]="loading()">Search records ↗</button><span>{{ rows().length }} records loaded</span></form>
   @if (error()) { <p class="error" role="alert">{{ error() }}</p><button class="secondary-button" (click)="load()">Try again</button> }
   <div class="records-list">
@@ -12,6 +27,16 @@
         } @else { <p class="legacy">Earlier assessment. Trained-model details were not recorded.</p><p>{{ r.recommendation }}</p> }
         <section class="follow-up" aria-label="Birth outcome follow-up">
           <h3>Birth outcome and follow-up</h3>
+          <p><strong>Saved baby count: {{ r.baby_count ?? 'Needs confirmation' }}</strong> · Pregnancy #{{ r.pregnancy_id ?? r.id }}
+            @if (r.birth_spacing_months !== null && r.birth_spacing_months !== undefined) { · Birth-spacing history: {{ r.birth_spacing_months }} months }
+          </p>
+          <button type="button" class="secondary-button" (click)="editCount(r)" [disabled]="saving()">{{ r.baby_count ? 'Correct baby count' : 'Confirm baby count' }}</button>
+          @if (countEditing() === r.id) {
+            <form class="count-form" (ngSubmit)="saveCount(r)"><label>Confirmed number of babies <select name="confirmedCount" required [(ngModel)]="countDraft"><option [ngValue]="null">Choose the confirmed number</option>@for (n of [1,2,3,4,5,6,7,8,9,10]; track n) { <option [ngValue]="n">{{ n }}</option> }</select></label><button type="submit" class="secondary-button" [disabled]="saving()">Save baby count</button><button type="button" class="secondary-button" [disabled]="saving()" (click)="countEditing.set(null)">Cancel</button>
+              @if (outcomeError()) { <p class="error" role="alert">{{ outcomeError() }}</p> }
+            </form>
+          }
+          @if (!r.baby_count) { <p>Confirm how many babies were expected before adding or updating a baby’s follow-up.</p> }
           <p>Record what happened after this assessment. Keep notes on care given and the source of the outcome.</p>
           @for (o of r.outcomes || []; track o.baby_number) {
             <div class="outcome-summary">
@@ -21,18 +46,18 @@
                 @if (o.death_age_days !== null) { · Age at death: {{ o.death_age_days }} completed days }</p>
               <p>Source: {{ o.source }}</p><p class="clinical-notes">{{ o.notes }}</p>
               <small>Revision {{ o.version }} · Clinician #{{ o.doctor_id }} · {{ o.recorded_at | date:'medium' }}</small>
-              <button type="button" class="secondary-button" (click)="editOutcome(r, o.baby_number)" [disabled]="saving()">Update baby {{ o.baby_number }}</button>
+              <button type="button" class="secondary-button" (click)="editOutcome(r, o.baby_number)" [disabled]="saving() || !r.baby_count">Update baby {{ o.baby_number }}</button>
             </div>
           } @empty { <p>No birth outcome recorded yet.</p> }
           <div class="follow-up-actions">
-            <button type="button" class="secondary-button" (click)="editOutcome(r)" [disabled]="saving()">{{ r.outcomes?.length ? 'Open follow-up' : 'Add outcome or notes' }}</button>
+            <button type="button" class="secondary-button" (click)="editOutcome(r)" [disabled]="saving() || !r.baby_count">{{ r.outcomes?.length ? 'Open follow-up' : 'Add outcome or notes' }}</button>
             <button type="button" class="secondary-button" (click)="viewRevisions(r.id)" [disabled]="historyLoading()">View follow-up history</button>
           </div>
           @if (outcomeSaved() === r.id) { <p role="status">Follow-up saved to clinic records.</p> }
           @if (editing() === r.id) {
             <form class="outcome-form" (ngSubmit)="saveOutcome(r)">
               <fieldset [disabled]="saving()">
-                <label>Baby number <select name="baby" [ngModel]="draft.baby_number" (ngModelChange)="editOutcome(r, +$event)">@for (n of r.multiple ? [1,2,3,4,5,6,7,8,9,10] : [1]; track n) { <option [ngValue]="n">Baby {{ n }}</option> }</select></label>
+                <label>Baby number <select name="baby" [ngModel]="draft.baby_number" (ngModelChange)="editOutcome(r, +$event)">@for (n of babyNumbers(r); track n) { <option [ngValue]="n">Baby {{ n }}</option> }</select></label>
                 <label>Follow-up date *<input name="observedOn" type="date" required [(ngModel)]="draft.observed_on" /></label>
                 <label>Birth date <input name="birthDate" type="date" [(ngModel)]="draft.birth_date" /></label>
                 <label>Baby’s outcome *<select name="status" [(ngModel)]="draft.status"><option value="unknown">Not yet known</option><option value="alive">Alive at follow-up</option><option value="stillbirth">Stillbirth</option><option value="died">Died after live birth</option></select></label>

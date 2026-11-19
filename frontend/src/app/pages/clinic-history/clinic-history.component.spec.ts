@@ -9,11 +9,14 @@ import { BirthOutcome, PredictResponse } from '../../core/models';
 describe('ClinicHistoryComponent follow-up', () => {
   let component: ClinicHistoryComponent;
   let api: jasmine.SpyObj<ApiService>;
-  const row: PredictResponse = { id: 12, patient_ref: 'ANC-014', risk: 0.1,
+  const row: PredictResponse = { id: 12, baby_count: 1, pregnancy_id: 12, patient_ref: 'ANC-014', risk: 0.1,
     risk_band: 'unclassified', top_drivers: [], recommendation: 'Review', created_at: '' };
   beforeEach(() => {
-    api = jasmine.createSpyObj('ApiService', ['history', 'saveOutcome', 'outcomeHistory']);
+    api = jasmine.createSpyObj('ApiService', ['history', 'saveOutcome', 'outcomeHistory', 'outcomeSummary', 'confirmBabyCount']);
     api.history.and.returnValue(of([row]));
+    api.outcomeSummary.and.returnValue(of({ pregnancies: 1, babies: 1,
+      pregnancies_without_baby_count: 0, survival: { alive: 0, died: 0, stillbirth: 0, pending: 1 },
+      birth_weight: { below_2500: 0, at_least_2500: 0, unknown: 1 }, synthetic_excluded: true }));
     TestBed.configureTestingModule({ providers: [
       { provide: ApiService, useValue: api },
       { provide: AuthService, useValue: { session: signal({ clinic_name: 'Clinic' }) } },
@@ -43,11 +46,27 @@ describe('ClinicHistoryComponent follow-up', () => {
     expect(component.outcomeError()).toContain('Another clinician');
     expect(component.editing()).toBe(row.id);
   });
+  it('offers exactly the saved baby count and rejects another baby', () => {
+    expect(component.babyNumbers({ ...row, baby_count: 3 })).toEqual([1, 2, 3]);
+    expect(component.babyNumbers({ ...row, baby_count: null })).toEqual([]);
+    component.editOutcome({ ...row, baby_count: 2 }, 3);
+    expect(component.editing()).toBeNull();
+    component.editOutcome({ ...row, baby_count: 2 }, 2);
+    expect(component.draft.baby_number).toBe(2);
+  });
+
+  it('shows summary counts from the API independently of loaded history pages', () => {
+    expect(component.summary()?.babies).toBe(1);
+    component.rows.set([]);
+    expect(component.summary()?.babies).toBe(1);
+    expect(component.survivalBars().find(b => b.label === 'Outcome not yet known')?.value).toBe(1);
+  });
+
   it('loads the correct baby revision for editing', () => {
     const outcome: BirthOutcome = { baby_number: 2, expected_version: 3, version: 3,
       birth_date: '2026-01-01', observed_on: '2026-01-10', status: 'alive', death_age_days: null,
       birth_weight_grams: 2400, source: 'Register', notes: 'Reviewed', doctor_id: 4, recorded_at: '' };
-    component.editOutcome({ ...row, multiple: true, outcomes: [outcome] }, 2);
+    component.editOutcome({ ...row, multiple: true, baby_count: 2, outcomes: [outcome] }, 2);
     expect(component.draft.expected_version).toBe(3);
     expect(component.draft.baby_number).toBe(2);
   });

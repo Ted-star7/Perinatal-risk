@@ -56,3 +56,16 @@ details p, details li, .legacy { color: var(--text-secondary); font-size: 12px; 
 .outcome-form input, .outcome-form select, .outcome-form textarea { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid var(--border-strong); border-radius: 8px; padding: 12px; background: var(--surface-2); color: var(--text-primary); font: inherit; min-height: 44px; }
 .outcome-form .wide { grid-column: 1 / -1; }
 @media(max-width: 600px) { .outcome-form fieldset { grid-template-columns: minmax(0, 1fr); } .outcome-form input, .outcome-form select, .outcome-form textarea { font-size: 16px; } }
+
+.outcome-dashboard { border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px; margin-bottom: 24px; background: var(--surface-2); }
+.chart-heading { display: flex; justify-content: space-between; align-items: start; gap: 18px; }
+.chart-heading .secondary-button { margin-top: 0; flex-shrink: 0; }
+.outcome-dashboard p { color: var(--text-secondary); font-size: 12px; line-height: 1.7; }
+.outcome-totals { display: flex; gap: 30px; flex-wrap: wrap; margin: 22px 0; }
+.outcome-totals strong { font-size: 28px; display: block; }.outcome-totals span { font-size: 12px; }
+.chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.chart-grid figure { margin: 0; min-width: 0; }.chart-grid figcaption { font-size: 14px; font-weight: 600; margin-bottom: 18px; }
+.chart-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 16px; font-size: 12px; }
+.chart-track { grid-column: 1 / -1; height: 10px; border-radius: 6px; background: var(--surface-1); overflow: hidden; }.chart-bar { height: 100%; background: var(--accent); border-radius: inherit; }.weight-bar { background: var(--text-secondary); }
+.count-form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }.count-form label { display: grid; gap: 8px; font-size: 12px; }.count-form select { min-height: 44px; padding: 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-2); color: inherit; }
+@media(max-width: 700px) { .chart-grid { grid-template-columns: minmax(0, 1fr); }.chart-heading { flex-direction: column; }.outcome-dashboard { padding: 18px 16px; }.count-form select { font-size: 16px; } }

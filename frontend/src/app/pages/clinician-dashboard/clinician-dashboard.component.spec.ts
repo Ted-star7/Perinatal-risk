@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, tick, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { of, Subject, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -22,14 +22,16 @@ describe('ClinicianDashboardComponent', () => {
 
   function completeForm(): void {
     component.update('patientRef', 'ANC-014');
+    component.findPatient();
     component.update('age', 29);
     component.update('firstPregnancy', true);
     component.update('multiple', false);
   }
 
   beforeEach(async () => {
-    api = jasmine.createSpyObj('ApiService', ['assess', 'predict']);
+    api = jasmine.createSpyObj('ApiService', ['assess', 'predict', 'patientLookup']);
     api.assess.and.returnValue(of(assessment));
+    api.patientLookup.and.returnValue(of({ found: false, assessment_count: 0, latest: null, inputs: null }));
     await TestBed.configureTestingModule({
       imports: [ClinicianDashboardComponent],
       providers: [
@@ -52,8 +54,59 @@ describe('ClinicianDashboardComponent', () => {
     component.assess();
     expect(api.assess).not.toHaveBeenCalled();
     component.update('patientRef', ' ANC-014 ');
+    component.findPatient();
+    component.update('age', 29);
+    component.update('firstPregnancy', true);
+    component.update('multiple', false);
     component.assess();
     expect(api.assess.calls.mostRecent().args[0].patient_ref).toBe('ANC-014');
+  });
+
+  it('checks the exact reference after typing and clears another patient’s details', fakeAsync(() => {
+    completeForm();
+    api.patientLookup.calls.reset();
+    component.update('patientRef', 'OTHER-014');
+    expect(component.form().age).toBeNull();
+    expect(component.form().pregnancyId).toBeNull();
+    tick(449);
+    expect(api.patientLookup).not.toHaveBeenCalled();
+    tick(1);
+    expect(api.patientLookup).toHaveBeenCalledOnceWith('OTHER-014');
+    expect(component.lookupLoading()).toBeFalse();
+  }));
+
+  it('loads a returning pregnancy and keeps new-pregnancy details separate', () => {
+    api.patientLookup.and.returnValue(of({ found: true, assessment_count: 2,
+      latest: { id: 11, pregnancy_id: 10, baby_count: 3, multiple: true,
+        patient_ref: 'ANC-014', risk: 0.1, risk_band: 'unclassified', top_drivers: [],
+        recommendation: '', created_at: '' },
+      inputs: { age_at_start: 29, first_pregnancy: false, parity: 1,
+        previous_loss: false, previous_stillbirth: false, education: 'Primary', birth_spacing_months: 18 } }));
+    component.update('patientRef', 'ANC-014');
+    component.findPatient();
+    component.assess();
+    expect(api.assess).not.toHaveBeenCalled();
+    component.usePreviousPregnancy();
+    expect(component.form().babyCount).toBe(3);
+    expect(component.form().pregnancyId).toBe(10);
+    expect(component.form().birthSpacing).toBe(18);
+    component.assess();
+    expect(api.assess.calls.mostRecent().args[0].baby_count).toBe(3);
+    expect(api.assess.calls.mostRecent().args[0].pregnancy_id).toBe(10);
+    component.newPregnancy();
+    expect(component.form().age).toBeNull();
+    expect(component.form().babyCount).toBeNull();
+    expect(component.form().pregnancyId).toBeNull();
+    expect(component.form().education).toBe('Primary');
+  });
+
+  it('ignores a patient lookup response for a superseded reference', () => {
+    const response = new Subject<any>();
+    api.patientLookup.and.returnValue(response);
+    component.update('patientRef', 'OLD'); component.findPatient();
+    component.update('patientRef', 'NEW');
+    response.next({ found: true, assessment_count: 1, latest: null, inputs: null });
+    expect(component.patientLookup()).toBeNull();
   });
 
   it('shows the API result for both outcomes', () => {

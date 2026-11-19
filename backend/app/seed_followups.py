@@ -39,7 +39,8 @@ def seed_followups(doctor_id: int) -> int:
                 doctor_id=doctor.id,
                 patient_ref=f"DEMO-FOLLOWUP-{index}",
                 request_id=request_id,
-                inputs={"synthetic": True, "multiple": False},
+                inputs={"synthetic": True, "multiple": False, "baby_count": 1},
+                baby_count=1,
                 risk=0,
                 risk_band="unclassified",
                 top_drivers=[],
@@ -48,6 +49,7 @@ def seed_followups(doctor_id: int) -> int:
             )
             db.add(prediction)
             db.flush()
+            prediction.pregnancy_id = prediction.id
             details = BirthOutcomeIn(
                 baby_number=1,
                 expected_version=0,

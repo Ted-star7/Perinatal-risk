@@ -121,7 +121,6 @@ class AccessTests(unittest.TestCase):
             )
 
     def test_birth_followup_is_scoped_versioned_and_does_not_change_prediction(self):
-        from app.models import Prediction
         from app.seed_followups import seed_followups
 
         self.assertEqual(seed_followups(self.session["doctor_id"]), 3)
@@ -176,10 +175,12 @@ class AccessTests(unittest.TestCase):
         other_headers = {"Authorization": f"Bearer {other['token']}"}
         self.assertEqual(self.client.get(url, headers=other_headers).status_code, 404)
         self.assertEqual(self.client.post(url, json=body, headers=other_headers).status_code, 404)
-        with SessionLocal() as db:
-            prediction = db.get(Prediction, row["id"])
-            prediction.inputs = prediction.inputs | {"multiple": True}
-            db.commit()
+        confirmed = self.client.patch(
+            f"/predictions/{row['id']}/baby-count",
+            json={"baby_count": 2, "expected_count": 1},
+            headers=self.headers,
+        )
+        self.assertEqual(confirmed.status_code, 200, confirmed.text)
         twin = self.client.post(
             url,
             json=body | {"baby_number": 2, "expected_version": 0, "birth_weight_grams": 2400},
@@ -192,6 +193,221 @@ class AccessTests(unittest.TestCase):
             if r["id"] == row["id"]
         )
         self.assertEqual({o["baby_number"] for o in latest["outcomes"]}, {1, 2})
+
+    def test_patient_lookup_and_shared_pregnancy_followup_use_saved_baby_count(self):
+        from app.models import Prediction
+
+        inputs = {
+            "patient_ref": "LOOKUP-014",
+            "age_at_start": 29,
+            "parity": 1,
+            "first_pregnancy": False,
+            "previous_loss": False,
+            "previous_stillbirth": False,
+            "multiple": True,
+            "baby_count": 2,
+            "birth_spacing_months": 24,
+            "education": "Primary",
+        }
+        with SessionLocal() as db:
+            root = Prediction(
+                clinic_id=self.session["clinic_id"],
+                doctor_id=self.session["doctor_id"],
+                patient_ref="LOOKUP-014",
+                inputs=inputs,
+                baby_count=2,
+                risk=0.1,
+                risk_band="unclassified",
+                top_drivers=[],
+                recommendation="Review",
+            )
+            db.add(root)
+            db.flush()
+            root.pregnancy_id = root.id
+            db.commit()
+            root_id = root.id
+        url = f"/predictions/{root_id}/outcomes"
+        lookup = self.client.get(
+            "/patients/lookup", params={"reference": " lookup-014 "}, headers=self.headers
+        ).json()
+        self.assertTrue(lookup["found"])
+        self.assertEqual(lookup["latest"]["baby_count"], 2)
+        self.assertEqual(lookup["inputs"]["birth_spacing_months"], 24)
+        self.assertFalse(
+            self.client.get(
+                "/patients/lookup", params={"reference": "LOOKUP"}, headers=self.headers
+            ).json()["found"]
+        )
+        other = self.client.post(
+            "/clinics/register",
+            json={
+                "clinic_name": "Other",
+                "doctor_name": "Other",
+                "email": f"{uuid4()}@example.com",
+                "password": "test66",
+            },
+        ).json()
+        other_headers = {"Authorization": f"Bearer {other['token']}"}
+        self.assertFalse(
+            self.client.get(
+                "/patients/lookup", params={"reference": "LOOKUP-014"}, headers=other_headers
+            ).json()["found"]
+        )
+        self.assertEqual(self.client.get("/patients/lookup").status_code, 401)
+        followup = {
+            "baby_number": 2,
+            "expected_version": 0,
+            "birth_date": "2026-01-01",
+            "observed_on": "2026-01-10",
+            "status": "alive",
+            "source": "Register",
+            "birth_weight_grams": 2400,
+        }
+        saved = self.client.post(url, json=followup, headers=self.headers)
+        self.assertEqual(saved.status_code, 200, saved.text)
+        self.assertEqual(
+            self.client.post(
+                url, json=followup | {"baby_number": 3}, headers=self.headers
+            ).status_code,
+            422,
+        )
+        outcome = OutcomeResult(
+            status="available",
+            label="Research",
+            description="Research",
+            score=0.1,
+            model_id="test",
+            message="Research",
+        )
+        result = AssessmentResult(
+            perinatal=outcome,
+            lbw=outcome,
+            notes=[],
+            recommendation="Review",
+            baseline=ChecklistResult(
+                flagged=False, factors=[], unknown_factors=[], summary="Clear"
+            ),
+        )
+        body = inputs | {"pregnancy_id": root_id, "request_id": str(uuid4())}
+        with patch("app.routers.predictions.score", return_value=result):
+            repeated = self.client.post("/predict", json=body, headers=self.headers)
+            self.assertEqual(repeated.status_code, 200, repeated.text)
+            mismatch = self.client.post(
+                "/predict",
+                json=body | {"request_id": str(uuid4()), "patient_ref": "OTHER"},
+                headers=self.headers,
+            )
+            self.assertEqual(mismatch.status_code, 422)
+            unauthorized = self.client.post("/predict", json=body, headers=other_headers)
+            self.assertEqual(unauthorized.status_code, 404)
+        child_id = repeated.json()["id"]
+        update = self.client.post(
+            f"/predictions/{child_id}/outcomes",
+            json=followup | {"expected_version": 1, "notes": "Second follow-up"},
+            headers=self.headers,
+        )
+        self.assertEqual(update.status_code, 200, update.text)
+        self.assertEqual(update.json()["version"], 2)
+        rows = self.client.get("/history", headers=self.headers).json()
+        self.assertTrue(all(r["outcomes"][0]["version"] == 2 for r in rows))
+        summary = self.client.get("/outcome-summary", headers=self.headers).json()
+        self.assertEqual(summary["pregnancies"], 1)
+        self.assertEqual(summary["babies"], 2)
+        self.assertEqual(
+            summary["survival"], {"alive": 1, "pending": 1, "died": 0, "stillbirth": 0}
+        )
+        self.assertEqual(summary["birth_weight"]["below_2500"], 1)
+        count_url = f"/predictions/{child_id}/baby-count"
+        changed = self.client.patch(
+            count_url, json={"baby_count": 3, "expected_count": 2}, headers=self.headers
+        )
+        self.assertEqual(changed.status_code, 200, changed.text)
+        self.assertEqual(
+            self.client.patch(
+                count_url, json={"baby_count": 4, "expected_count": 2}, headers=self.headers
+            ).status_code,
+            409,
+        )
+        self.assertEqual(
+            self.client.patch(
+                count_url, json={"baby_count": 1, "expected_count": 3}, headers=self.headers
+            ).status_code,
+            422,
+        )
+        self.assertEqual(
+            self.client.get("/outcome-summary", headers=other_headers).json()["babies"], 0
+        )
+
+    def test_missing_legacy_baby_count_needs_confirmation_and_demos_are_excluded(self):
+        from app.models import Prediction
+        from app.seed_followups import seed_followups
+
+        seed_followups(self.session["doctor_id"])
+        summary = self.client.get("/outcome-summary", headers=self.headers).json()
+        self.assertEqual(summary["pregnancies"], 0)
+        self.assertEqual(summary["babies"], 0)
+        with SessionLocal() as db:
+            row = Prediction(
+                clinic_id=self.session["clinic_id"],
+                doctor_id=self.session["doctor_id"],
+                patient_ref="LEGACY-MULTIPLE",
+                inputs={"multiple": True},
+                risk=0.1,
+                risk_band="unclassified",
+                top_drivers=[],
+                recommendation="Review",
+            )
+            db.add(row)
+            db.flush()
+            row.pregnancy_id = row.id
+            db.commit()
+            rid = row.id
+        body = {
+            "baby_number": 1,
+            "expected_version": 0,
+            "observed_on": "2026-01-10",
+            "status": "unknown",
+            "source": "Notes",
+        }
+        self.assertEqual(
+            self.client.post(
+                f"/predictions/{rid}/outcomes", json=body, headers=self.headers
+            ).status_code,
+            422,
+        )
+        summary = self.client.get("/outcome-summary", headers=self.headers).json()
+        self.assertEqual(summary["pregnancies_without_baby_count"], 1)
+        updated = self.client.patch(
+            f"/predictions/{rid}/baby-count",
+            json={"baby_count": 3, "expected_count": None},
+            headers=self.headers,
+        )
+        self.assertEqual(updated.status_code, 200, updated.text)
+        self.assertEqual(updated.json()["baby_count"], 3)
+        self.assertEqual(
+            self.client.get("/outcome-summary", headers=self.headers).json()["babies"], 3
+        )
+
+    def test_followup_dates_use_the_clinicians_local_day(self):
+        from datetime import datetime, timezone
+
+        from app.schemas import BirthOutcomeIn
+
+        body = {
+            "baby_number": 1,
+            "expected_version": 0,
+            "observed_on": "2026-01-02",
+            "status": "unknown",
+            "source": "Register",
+            "utc_offset_minutes": 180,
+        }
+        with patch("app.schemas.datetime") as clock:
+            clock.now.return_value = datetime(2026, 1, 1, 22, 30, tzinfo=timezone.utc)
+            self.assertEqual(str(BirthOutcomeIn(**body).observed_on), "2026-01-02")
+            with self.assertRaises(ValueError):
+                BirthOutcomeIn(**(body | {"observed_on": "2026-01-03"}))
+            with self.assertRaises(ValueError):
+                BirthOutcomeIn(**(body | {"utc_offset_minutes": -300}))
 
     def test_outcome_dates_and_unknowns_are_validated(self):
         from datetime import datetime, timedelta, timezone

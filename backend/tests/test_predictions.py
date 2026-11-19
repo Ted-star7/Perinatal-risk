@@ -184,6 +184,25 @@ class PredictionTests(unittest.TestCase):
         self.assertEqual(result.lbw.status, "unavailable")
         self.assertIn("education", result.lbw.message)
 
+    def test_baby_count_and_birth_spacing_are_recorded_without_changing_model_features(self):
+        twin = PredictRequest(
+            **(
+                self.request.model_dump()
+                | {"multiple": True, "baby_count": 2, "birth_spacing_months": 18}
+            )
+        )
+        self.assertEqual(twin.baby_count, 2)
+        self.assertNotIn("birth_spacing_months", feature_row(twin, "perinatal"))
+        self.assertNotIn("baby_count", feature_row(twin, "perinatal"))
+        for updates in [
+            {"multiple": True, "baby_count": None},
+            {"baby_count": 2},
+            {"multiple": True, "baby_count": 11},
+            {"birth_spacing_months": -1},
+        ]:
+            with self.assertRaises(ValueError):
+                PredictRequest(**(self.request.model_dump() | updates))
+
     def test_conflicting_history_and_invalid_numeric_inputs_are_rejected(self):
         for updates in [
             {"first_pregnancy": True},
@@ -274,6 +293,40 @@ class PredictionTests(unittest.TestCase):
             other_headers = {"Authorization": f"Bearer {other['token']}"}
             self.assertEqual(client.get("/history", headers=other_headers).json(), [])
 
+    def test_legacy_baby_count_backfill_does_not_guess_multiple_counts(self):
+        from app import database
+        from sqlalchemy import create_engine
+
+        legacy = create_engine("sqlite://")
+        with legacy.begin() as con:
+            con.execute(
+                text(
+                    "CREATE TABLE predictions (id INTEGER PRIMARY KEY, "
+                    "clinic_id INTEGER, risk DOUBLE PRECISION, inputs JSON)"
+                )
+            )
+            for pid, value in [
+                (1, '{"multiple": false}'),
+                (2, '{"multiple": true}'),
+                (3, '{"multiple": true, "baby_count": 3}'),
+            ]:
+                con.execute(
+                    text(
+                        "INSERT INTO predictions(id,clinic_id,risk,inputs) "
+                        "VALUES (:id,1,0.1,:inputs)"
+                    ),
+                    {"id": pid, "inputs": value},
+                )
+        with patch.object(database, "engine", legacy):
+            database.init_db()
+            database.init_db()
+        with legacy.connect() as con:
+            result = con.execute(
+                text("SELECT id,baby_count,pregnancy_id FROM predictions ORDER BY id")
+            ).all()
+            self.assertEqual([tuple(row) for row in result], [(1, 1, 1), (2, None, 2), (3, 3, 3)])
+        legacy.dispose()
+
     def test_existing_database_upgrade_is_repeatable(self):
         init_db()
         init_db()
@@ -327,7 +380,9 @@ class PredictionTests(unittest.TestCase):
             root / "frontend/src/app/pages/clinician-dashboard/clinician-dashboard.component.html"
         )
         parser.feed(template.read_text())
-        self.assertEqual(parser.names - {"patientRef"}, required_controls)
+        self.assertEqual(
+            parser.names - {"patientRef", "babyCount", "birthSpacing"}, required_controls
+        )
 
     def test_assessment_api_matches_the_real_model_files(self):
         root = Path(__file__).resolve().parents[2]

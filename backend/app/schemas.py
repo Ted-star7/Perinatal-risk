@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -65,6 +65,9 @@ class PredictRequest(BaseModel):
     previous_stillbirth: bool = False
     previous_loss: bool = False
     multiple: bool = False
+    baby_count: int | None = Field(default=None, ge=1, le=10)
+    pregnancy_id: int | None = Field(default=None, ge=1)
+    birth_spacing_months: int | None = Field(default=None, ge=0, le=480)
     told_high_bp: bool = False
     anc_visits: int | None = Field(default=None, ge=0, le=20)
     education: Literal["No education", "Primary", "Secondary", "Higher"] | None = None
@@ -73,6 +76,15 @@ class PredictRequest(BaseModel):
 
     @model_validator(mode="after")
     def check_history(self):
+        if self.multiple:
+            if self.baby_count is None or self.baby_count < 2:
+                raise ValueError("Enter the number of babies for a multiple pregnancy.")
+        elif self.baby_count not in (None, 1):
+            raise ValueError("A single pregnancy must record one baby.")
+        else:
+            self.baby_count = 1
+        if self.first_pregnancy and self.birth_spacing_months is not None:
+            raise ValueError("A first pregnancy has no birth-spacing history.")
         if self.first_pregnancy and (
             self.parity > 0 or self.previous_loss or self.previous_stillbirth
         ):
@@ -121,6 +133,7 @@ class BirthOutcomeIn(BaseModel):
     expected_version: int = Field(ge=0)
     birth_date: date | None = None
     observed_on: date
+    utc_offset_minutes: int = Field(default=0, ge=-720, le=840)
     status: Literal["unknown", "alive", "stillbirth", "died"]
     death_age_days: int | None = Field(default=None, ge=0, le=3650)
     birth_weight_grams: int | None = Field(default=None, ge=100, le=10000)
@@ -129,7 +142,7 @@ class BirthOutcomeIn(BaseModel):
 
     @model_validator(mode="after")
     def check_dates(self):
-        today = datetime.now(timezone.utc).date()
+        today = (datetime.now(timezone.utc) + timedelta(minutes=self.utc_offset_minutes)).date()
         if self.observed_on > today or (self.birth_date and self.birth_date > self.observed_on):
             raise ValueError("Check the birth and follow-up dates; future dates are not allowed.")
         if self.status != "unknown" and self.birth_date is None:
@@ -163,6 +176,14 @@ class PredictResponse(BaseModel):
     assessment: AssessmentResult | None = None
     outcomes: list[BirthOutcomeResponse] = []
     multiple: bool = False
+    baby_count: int | None = None
+    pregnancy_id: int | None = None
+    birth_spacing_months: int | None = None
+
+
+class BabyCountUpdate(BaseModel):
+    baby_count: int = Field(ge=1, le=10)
+    expected_count: int | None = Field(default=None, ge=1, le=10)
 
 
 # ---- model metrics (one row per cohort + algorithm; modeling notebooks post here) ----

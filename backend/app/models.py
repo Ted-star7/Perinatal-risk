@@ -70,6 +70,8 @@ class Prediction(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
+    baby_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    pregnancy_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     patient_ref: Mapped[str | None] = mapped_column(String(60), nullable=True)
     inputs: Mapped[dict] = mapped_column(JSON)
     risk: Mapped[float] = mapped_column(Float)

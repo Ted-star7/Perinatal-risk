@@ -15,6 +15,19 @@
               <small id="patient-reference-help">Use the mother’s ANC card or clinic reference to find her saved assessment. This is used for recordkeeping.</small>
               <small class="error" id="patient-reference-error">{{ submitted() ? errors()['patientRef'] : '' }}</small>
             </label>
+            <div class="wide" aria-live="polite">
+              @if (lookupLoading()) { <p>Checking for earlier clinic records…</p> }
+              @if (lookupError()) { <p class="error">{{ lookupError() }}</p><button type="button" class="secondary-button" (click)="findPatient()">Retry patient lookup</button> }
+              @if (patientLookup(); as patient) {
+                @if (patient.found && patient.latest) {
+                  <p><strong>Returning patient</strong> · {{ patient.assessment_count }} saved assessments · Last seen {{ patient.latest.created_at | date:'mediumDate' }}</p>
+                  <p>Is this a follow-up for that pregnancy, or a new pregnancy? Check the reference against the mother’s clinic card.</p>
+                  <div class="choices"><button type="button" class="secondary-button" (click)="usePreviousPregnancy()">Continue saved pregnancy</button><button type="button" class="secondary-button" (click)="newPregnancy()">Start a new pregnancy</button></div>
+                  @if (patientChoice() === 'continue') { <p>Saved pregnancy details loaded. Confirm every answer with the mother before assessing.</p> }
+                  @if (patientChoice() === 'new') { <p>New pregnancy selected. Enter the current pregnancy details and confirm her updated history.</p> }
+                } @else { <p>No earlier assessment found for this reference in your clinic. Complete the details for a first visit.</p> }
+              }
+            </div>
           </div>
         </section>
         <section class="field-section">
@@ -43,12 +56,23 @@
               </div>
               <small class="error">{{ submitted() ? errors()['multiple'] : '' }}</small>
             </fieldset>
+            @if (form().multiple === true) {
+              <label class="wide"><span>Number of babies expected <span class="required">*</span></span>
+                <select name="babyCount" required [ngModel]="form().babyCount" (ngModelChange)="update('babyCount', $event)"><option [ngValue]="null">Choose the confirmed number</option>@for (n of [2,3,4,5,6,7,8,9,10]; track n) { <option [ngValue]="n">{{ n }} babies</option> }</select>
+                <small>This number is saved and used to list each baby during birth follow-up.</small><small class="error">{{ submitted() ? errors()['babyCount'] : '' }}</small>
+              </label>
+            }
           </div>
         </section>
         @if (form().firstPregnancy === false) {
           <section class="field-section">
             <h3><i class="ti ti-history" aria-hidden="true"></i> Pregnancy history</h3>
             <div class="field-grid">
+              <label class="wide"><span>Birth-spacing history (months)</span>
+                <input name="birthSpacing" type="number" min="0" max="480" step="1" inputmode="numeric" [ngModel]="form().birthSpacing" (ngModelChange)="update('birthSpacing', $event)" placeholder="Leave blank if unknown or no previous birth" />
+                <small>Completed months from her last birth to the start of this pregnancy. Saved as clinical history; the current prediction models do not use this field.</small>
+                <small class="error">{{ submitted() ? errors()['birthSpacing'] : '' }}</small>
+              </label>
               <label>
                 <span>Previous live births <span class="required">*</span></span>
                 <input name="parity" type="number" required min="0" max="16" inputmode="numeric" [ngModel]="form().parity" (ngModelChange)="update('parity', $event)" placeholder="e.g. 1" />

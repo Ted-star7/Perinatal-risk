@@ -35,6 +35,9 @@ export interface PredictRequest {
   previous_stillbirth: boolean;
   previous_loss: boolean;
   multiple: boolean;
+  baby_count?: number;
+  pregnancy_id?: number | null;
+  birth_spacing_months?: number | null;
   told_high_bp?: boolean;
   anc_visits?: number | null;
   education?: 'No education' | 'Primary' | 'Secondary' | 'Higher' | null;
@@ -84,6 +87,9 @@ export interface PredictResponse {
   assessment?: AssessmentResult | null;
   outcomes?: BirthOutcome[];
   multiple?: boolean;
+  baby_count?: number | null;
+  pregnancy_id?: number;
+  birth_spacing_months?: number | null;
 }
 
 /** One model's result from the shared /metrics store (one row per cohort+algorithm). */
@@ -104,6 +110,7 @@ export interface BirthOutcomeInput {
   expected_version: number;
   birth_date: string | null;
   observed_on: string;
+  utc_offset_minutes?: number;
   status: 'unknown' | 'alive' | 'stillbirth' | 'died';
   death_age_days: number | null;
   birth_weight_grams: number | null;
@@ -114,4 +121,19 @@ export interface BirthOutcome extends BirthOutcomeInput {
   version: number;
   doctor_id: number;
   recorded_at: string;
+}
+
+export interface PatientLookup {
+  found: boolean;
+  assessment_count: number;
+  latest: PredictResponse | null;
+  inputs: Partial<PredictRequest> | null;
+}
+export interface OutcomeSummary {
+  pregnancies: number;
+  babies: number;
+  pregnancies_without_baby_count: number;
+  survival: { pending: number; alive: number; stillbirth: number; died: number };
+  birth_weight: { below_2500: number; at_least_2500: number; unknown: number };
+  synthetic_excluded: boolean;
 }

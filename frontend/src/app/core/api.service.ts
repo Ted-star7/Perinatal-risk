@@ -4,6 +4,8 @@ import { Observable, timeout } from 'rxjs';
 import {
   BirthOutcome,
   BirthOutcomeInput,
+  PatientLookup,
+  OutcomeSummary,
   LoginBody,
   PredictRequest,
   PredictResponse,
@@ -82,6 +84,22 @@ export class ApiService {
 
   outcomeHistory(id: number): Observable<BirthOutcome[]> {
     return this.http.get<BirthOutcome[]>(`${API_BASE}/predictions/${id}/outcomes`);
+  }
+
+  patientLookup(reference: string): Observable<PatientLookup> {
+    return this.http.get<PatientLookup>(`${API_BASE}/patients/lookup`, {
+      params: new HttpParams().set('reference', reference),
+    });
+  }
+
+  outcomeSummary(): Observable<OutcomeSummary> {
+    return this.http.get<OutcomeSummary>(`${API_BASE}/outcome-summary`);
+  }
+
+  confirmBabyCount(id: number, baby_count: number, expected_count: number | null): Observable<PredictResponse> {
+    return this.http.patch<PredictResponse>(`${API_BASE}/predictions/${id}/baby-count`, {
+      baby_count, expected_count,
+    });
   }
 
   session(): Observable<{ is_owner: boolean }> {

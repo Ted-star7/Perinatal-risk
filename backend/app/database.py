@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 
 from sqlalchemy import create_engine, inspect, text
@@ -68,6 +69,40 @@ def init_db() -> None:
         if not con.scalar(text("SELECT version FROM schema_migrations WHERE version = 5")):
             # Base.metadata.create_all creates the additive, append-only birth_outcomes table.
             con.execute(text("INSERT INTO schema_migrations(version) VALUES (5)"))
+        if not con.scalar(text("SELECT version FROM schema_migrations WHERE version = 6")):
+            existing = {column["name"] for column in inspect(con).get_columns("predictions")}
+            for name in ("baby_count", "pregnancy_id"):
+                if name not in existing:
+                    con.execute(text(f"ALTER TABLE predictions ADD COLUMN {name} INTEGER"))
+            con.execute(text("UPDATE predictions SET pregnancy_id = id WHERE pregnancy_id IS NULL"))
+            if "inputs" in existing:
+                for row in con.execute(text("SELECT id, inputs FROM predictions")):
+                    inputs = row.inputs
+                    if isinstance(inputs, str):
+                        inputs = json.loads(inputs)
+                    inputs = inputs or {}
+                    count = inputs.get("baby_count")
+                    if count is None and not inputs.get("multiple"):
+                        count = 1
+                    if isinstance(count, int) and 1 <= count <= 10:
+                        con.execute(
+                            text("UPDATE predictions SET baby_count = :count WHERE id = :id"),
+                            {"count": count, "id": row.id},
+                        )
+            con.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_predictions_pregnancy_id "
+                    "ON predictions(pregnancy_id)"
+                )
+            )
+            if "patient_ref" in existing:
+                con.execute(
+                    text(
+                        "CREATE INDEX IF NOT EXISTS ix_predictions_patient_reference "
+                        "ON predictions(clinic_id, lower(trim(patient_ref)))"
+                    )
+                )
+            con.execute(text("INSERT INTO schema_migrations(version) VALUES (6)"))
         for statement in filter(str.strip, METRICS_DDL.split(";")):
             con.execute(text(statement))
         # Historical duplicate flags are resolved deterministically before the unique index.
