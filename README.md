@@ -99,19 +99,22 @@ Windows (Docker + WSL) walkthrough: [RUNNING.md](RUNNING.md).
 
 ## Contributors
 
-Group 13, six of us. We split into Kenya and Tanzania squads for the data stage,
-then regrouped around the build.
+Group 13 — six of us, every stage a genuine team effort. We split into Kenya and
+Tanzania squads for the data work, then regrouped around the build. **Jeff Waweru
+led the team overall**, steering the project across EDA, modeling and delivery and
+keeping all three cohorts moving in step.
 
-| Person | GitHub | Role & main work |
-|--------|--------|------------------|
-| **Teddy Kibuthu** | [`Ted-star7`](https://github.com/Ted-star7) | Scrum master / integrator. Tanzania EDA, perinatal gradient boosting, FastAPI backend, Render hosting, shared metrics endpoint, Triage UI. |
-| **Jeff Waweru** | [`Kirukuu`](https://github.com/Kirukuu) | Tanzania team lead. ANC & LBW gradient boosting, logistic-regression tuning on the shared CV folds. |
-| **Dennis Mwikya** | [`des-data`](https://github.com/des-data) | Kenya EDA, ANC random forest, evaluation-dashboard design. |
-| **Jeremy Mwangi** | [`mwangi54`](https://github.com/mwangi54) | Kenya EDA, perinatal & LBW random forest (bootstrap CIs, calibration). |
-| **Eglen Nyangasi** | [`eglen-nyangasi`](https://github.com/eglen-nyangasi) | Kenya EDA, perinatal & ANC logistic regression. |
-| **Caroline Rotich** | [`carolnerotich`](https://github.com/carolnerotich) | Tanzania EDA, LBW logistic regression. |
+| Person | GitHub | Role & contributions |
+|--------|--------|----------------------|
+| **Jeff Waweru** | [`Kirukuu`](https://github.com/Kirukuu) | **Overall Team Lead** — guided the whole team through EDA, modeling and delivery. Tanzania ANC EDA; ANC & LBW gradient boosting; tuned the logistic-regression models on the shared cluster-grouped CV folds. |
+| **Teddy Kibuthu** | [`Ted-star7`](https://github.com/Ted-star7) | Scrum master & integrator (reviews and merges into `main`). Tanzania & Kenya perinatal EDA; perinatal gradient boosting; FastAPI backend, database, Render hosting, shared metrics endpoint, and the Triage UI. |
+| **Dennis Mwikya** | [`des-data`](https://github.com/des-data) | Kenya ANC EDA; ANC random forest; designed and built the evaluation dashboard; the shared-metrics proxy and notebook save-cell wiring. |
+| **Jeremy Mwangi** | [`mwangi54`](https://github.com/mwangi54) | Kenya LBW EDA; perinatal & LBW random forest, with bootstrap confidence intervals and calibration — the most statistically careful of the notebooks. |
+| **Eglen Nyangasi** | [`eglen-nyangasi`](https://github.com/eglen-nyangasi) | Helped set up the database (Docker Postgres + connecting the team); perinatal & ANC logistic regression; Kenya EDA support. |
+| **Caroline Rotich** | [`carolnerotich`](https://github.com/carolnerotich) | Tanzania LBW EDA; LBW logistic regression, with clear plain-language write-ups of the results. |
 
-`main` stays clean: everyone branches, opens a pull request, and Teddy merges.
+Everyone contributed across EDA, modeling and the shared `contracts/` definitions.
+`main` stays clean: each person branches, opens a pull request, and Teddy merges.
 See [GETTING_STARTED.md](GETTING_STARTED.md) to set up, [CONTRIBUTING.md](CONTRIBUTING.md)
 for the rules, and [TEAM.md](TEAM.md) for who owns which folder.
 
