@@ -105,7 +105,7 @@ then regrouped around the build.
 | Person | GitHub | Role & main work |
 |--------|--------|------------------|
 | **Teddy Kibuthu** | [`Ted-star7`](https://github.com/Ted-star7) | Scrum master / integrator. Tanzania EDA, perinatal gradient boosting, FastAPI backend, Render hosting, shared metrics endpoint, Triage UI. |
-| **Jeff Waweru** | [`Kirukuu`](https://github.com/Kirukuu) | Tanzania team lead. ANC & LBW gradient boosting, logistic-regression tuning on the shared CV folds. |
+| **Jeff Waweru** | [`Kirukuu`](https://github.com/Kirukuu) | Team Lead. Tanzania EDA. ANC & LBW gradient boosting, logistic-regression tuning on the shared CV folds. |
 | **Dennis Mwikya** | [`des-data`](https://github.com/des-data) | Kenya EDA, ANC random forest, evaluation-dashboard design. |
 | **Jeremy Mwangi** | [`mwangi54`](https://github.com/mwangi54) | Kenya EDA, perinatal & LBW random forest (bootstrap CIs, calibration). |
 | **Eglen Nyangasi** | [`eglen-nyangasi`](https://github.com/eglen-nyangasi) | Kenya EDA, perinatal & ANC logistic regression. |
